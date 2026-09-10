@@ -34,7 +34,7 @@ header p{color:var(--mut);margin:10px 0 0;font-size:15px;max-width:34rem}
 .step3 b{display:block;font-size:14px}
 .step3 .n{display:inline-flex;width:22px;height:22px;border-radius:99px;background:#fff;color:#000;font-size:12px;font-weight:800;align-items:center;justify-content:center;margin-bottom:6px}
 .step3 p{margin:4px 0 0;font-size:13px;color:#D4D4D8}
-input[type=text],input[type=search],input[type=password],input[type=number],select{width:100%;padding:13px 12px;border-radius:10px;border:1px solid var(--line);background:#000;color:#fff;font-size:16px;min-height:48px}
+input[type=text],input[type=search],input[type=password],input[type=number],input[type=tel],select{width:100%;padding:13px 12px;border-radius:10px;border:1px solid var(--line);background:#000;color:#fff;font-size:16px;min-height:48px}
 input::placeholder{color:#52525B}
 input:focus,select:focus,button:focus-visible{outline:2px solid #fff;outline-offset:1px}
 label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
@@ -121,7 +121,9 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <label for="standName">Your full name</label>
 <input id="standName" type="text" maxlength="60" placeholder="e.g. Anita Rao" autocomplete="off"/>
 <label for="standBatch">Your batch year</label>
-<input id="standBatch" type="number" inputmode="numeric" min="1950" max="2027" placeholder="e.g. 2004"/>
+<input id="standBatch" type="number" inputmode="numeric" min="1996" max="2021" placeholder="e.g. 2004"/>
+<label for="standPhone">Your mobile number</label>
+<input id="standPhone" type="tel" inputmode="numeric" maxlength="13" placeholder="10-digit mobile" autocomplete="off"/>
 <label for="standJob">Which role?</label>
 <select id="standJob"></select>
 <div id="slotHint" class="hintline"></div>
@@ -129,6 +131,7 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <ul class="rules">
 <li>Every batch gets <b>2 places</b> for each role.</li>
 <li>One person, one role.</li>
+<li>Batches 1996 to 2021. Batch of 2021 — please focus on studies; you can still endorse.</li>
 <li>The role list gets fixed once endorsements open.</li>
 </ul>
 </div>
@@ -209,8 +212,8 @@ let sel={},writeins={},voteIdx=0,voteLimit=30,lastVoteSlug='';
 const IS_ADMIN_ROUTE=window.location.pathname.replace(/\/+$/,'')!=='';
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3600)}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function batchOf(n){const m=(n||'').match(/\b(19[5-9]\d|20[0-2]\d)\b/);return m?m[0]:''}
-function personOf(n){return (n||'').replace(/\(.*?\)/g,' ').replace(/\b(19[5-9]\d|20[0-2]\d)\b/g,' ').replace(/\s+/g,' ').trim().toLowerCase()}
+function batchOf(n){const m=(n||'').match(/\b(199[6-9]|200\d|202[01])\b/);return m?m[0]:''}
+function personOf(n){return (n||'').replace(/\(.*?\)/g,' ').replace(/\b(199[6-9]|200\d|202[01])\b/g,' ').replace(/\s+/g,' ').trim().toLowerCase()}
 async function api(p,o){const r=await fetch(p,{headers:{'Content-Type':'application/json'},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j}
 async function load(){
 try{
@@ -237,7 +240,7 @@ const j=document.getElementById('standJob').value;
 const nm=(document.getElementById('standName').value||'').trim();
 const h=document.getElementById('slotHint');
 const o=OFFICES.find(x=>x.slug===j);if(!o){h.textContent='';return;}
-if(!/^(19[5-9]\d|20[0-2]\d)$/.test(b)){h.className='hintline';h.textContent=`${o.title}: every batch gets 2 places.`;return;}
+if(!/^(199[6-9]|200\d|202[01])$/.test(b)){h.className='hintline';h.textContent=`${o.title}: every batch gets 2 places.`;return;}
 const taken=(CANDS[j]||[]).filter(c=>batchOf(c.name)===b).length;
 const mine=nm&&personOf(nm).length>1?(OFFICES.filter(x=>x.slug!==j).find(x=>(CANDS[x.slug]||[]).some(c=>personOf(c.name)===personOf(nm)&&personOf(nm)))):null;
 if(taken>=2){h.className='hintline full';h.textContent=`Batch ${b} · ${o.title}: full (2 of 2 taken). Try another job.`;}
@@ -248,13 +251,15 @@ document.getElementById('standJob').addEventListener('change',slotHint);
 async function stand(){
 const nm=(document.getElementById('standName').value||'').trim();
 const b=(document.getElementById('standBatch').value||'').trim();
+const ph=(document.getElementById('standPhone').value||'').replace(/\D/g,'');
 const j=document.getElementById('standJob').value;
 if(nm.length<2)return toast('Please type your full name');
-if(!/^(19[5-9]\d|20[0-2]\d)$/.test(b))return toast('Please type your 4-digit batch year, e.g. 2004');
-if(!j)return toast('Please pick a job');
+if(!/^(199[6-9]|200\d|202[01])$/.test(b))return toast('Please type your batch year (1996–2021)');
+if(!/^(91\d{10}|\d{10})$/.test(ph))return toast('Please type your 10-digit mobile number');
+if(!j)return toast('Please pick a role');
 const btn=document.getElementById('standBtn');btn.disabled=true;
-try{await api('/api/candidates',{method:'POST',body:JSON.stringify({race:j,name:`${nm} (${b})`})});
-document.getElementById('standName').value='';document.getElementById('standBatch').value='';
+try{await api('/api/candidates',{method:'POST',body:JSON.stringify({race:j,name:`${nm} (${b})`,phone:ph})});
+document.getElementById('standName').value='';document.getElementById('standBatch').value='';document.getElementById('standPhone').value='';
 toast('Thank you for stepping forward!');load();}catch(e){toast(e.message)}finally{btn.disabled=false}
 }
 // WHO IS STANDING
@@ -424,6 +429,7 @@ try{await api('/api/reset',{method:'POST',headers:adminHeaders(),body:JSON.strin
 document.getElementById('voter').addEventListener('keydown',e=>{if(e.key==='Enter')submitVote()});
 document.getElementById('standName').addEventListener('keydown',e=>{if(e.key==='Enter')stand()});
 document.getElementById('standBatch').addEventListener('keydown',e=>{if(e.key==='Enter')stand()});
+document.getElementById('standPhone').addEventListener('keydown',e=>{if(e.key==='Enter')stand()});
 document.getElementById('voteWritein').addEventListener('input',e=>{const o=curOffice();if(!o)return;if(e.target.value.trim()&&sel[o.slug])delete sel[o.slug];});
 document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')adminUnlock()});
 load();setInterval(load,9000);

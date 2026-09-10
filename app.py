@@ -20,6 +20,12 @@ def security_headers(resp):
         "default-src 'self'; style-src 'self' 'unsafe-inline'; "
         "script-src 'self' 'unsafe-inline'; img-src 'self' data:; "
         "connect-src 'self'; frame-ancestors 'none'")
+    # Never let browsers (especially mobiles) cache the page or API data:
+    # every visit must fetch the latest version. No hard-refresh needed.
+    p = request.path or "/"
+    if p == "/" or p.startswith("/api/") or (ADMIN_PATH and p.strip("/") == ADMIN_PATH):
+        resp.headers["Cache-Control"] = "no-store, max-age=0"
+        resp.headers["Pragma"] = "no-cache"
     return resp
 
 # Light in-memory throttle (generous: many voters may share school wifi / one IP).
@@ -117,6 +123,7 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         race TEXT NOT NULL,
         name TEXT NOT NULL,
+        phone TEXT NOT NULL DEFAULT '',
         created_at TEXT NOT NULL,
         UNIQUE(race, name COLLATE NOCASE)
     );
@@ -143,6 +150,14 @@ def init_db():
         value TEXT NOT NULL
     );
     """)
+    # Phone numbers for volunteers (admin eyes only, never in public state).
+    try:
+        cols0 = [r["name"] for r in conn.execute("PRAGMA table_info(candidates)")]
+        if "phone" not in cols0:
+            conn.execute("ALTER TABLE candidates ADD COLUMN phone TEXT NOT NULL DEFAULT ''")
+            conn.commit()
+    except Exception:
+        pass
     # Migrate legacy tables if present
     cols = [r["name"] for r in conn.execute("PRAGMA table_info(votes)")]
     if "president_id" in cols:
@@ -212,10 +227,13 @@ def all_races(conn):
 def norm(s):
     return (s or "").strip()
 
-# Self-nomination rules: every batch gets 2 places for each job,
-# and one person can stand for only one job.
+# Self-nomination rules: batches 1996–2021; every batch gets 2 places per role;
+# one person stands for only one role. Batch of 2021 is excused to focus on studies.
+BATCH_MIN, BATCH_MAX = 1996, 2021
+BATCH_STUDY_CUTOFF = 2020  # volunteers must be this batch or earlier
 BATCH_SLOT_LIMIT = 2
-BATCH_YEAR_RE = re.compile(r"\b(19[5-9]\d|20[0-2]\d)\b")
+BATCH_YEAR_RE = re.compile(r"\b(199[6-9]|200\d|202[01])\b")
+ANY_YEAR_RE = re.compile(r"\b(19\d\d|20\d\d)\b")
 
 def parse_batch(name):
     m = BATCH_YEAR_RE.search(name or "")
@@ -226,11 +244,23 @@ def person_key(name):
     s = BATCH_YEAR_RE.sub(" ", s)
     return re.sub(r"\s+", " ", s).strip().lower()
 
+def clean_phone(raw):
+    d = re.sub(r"\D", "", raw or "")
+    if d.startswith("91") and len(d) == 12:
+        d = d[2:]
+    return d if len(d) == 10 else None
+
 def nomination_error(conn, race, name):
-    """Plain-language error, or None if this name may stand for this job."""
+    """Plain-language error, or None if this name may stand for this role."""
     batch = parse_batch(name)
     if not batch:
+        if ANY_YEAR_RE.search(name or ""):
+            return ("Sorry, this process covers batches 1996 to 2021. "
+                    "Please check the batch year.")
         return "Please add the batch year with the name, e.g. Anita Rao (2004)."
+    if int(batch) > BATCH_STUDY_CUTOFF:
+        return (f"Batch {batch} — thank you, but please focus on your studies for now. "
+                "You can still endorse others.")
     if len(person_key(name)) < 2:
         return "Please type the full name."
     cmap = custom_map(conn)
@@ -464,9 +494,15 @@ def add_candidate():
     if err:
         conn.close()
         return jsonify({"error": err}), 409
+    phone = ""
+    if data.get("phone"):
+        phone = clean_phone(data.get("phone")) or ""
+        if not phone:
+            conn.close()
+            return jsonify({"error": "Please check the mobile number — 10 digits."}), 400
     try:
-        cur = conn.execute("INSERT INTO candidates (race, name, created_at) VALUES (?,?,?)",
-                           (race, name, datetime.utcnow().isoformat()))
+        cur = conn.execute("INSERT INTO candidates (race, name, phone, created_at) VALUES (?,?,?,?)",
+                           (race, name, phone, datetime.utcnow().isoformat()))
         conn.commit()
         cid = cur.lastrowid
     except sqlite3.IntegrityError:
