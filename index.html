@@ -3,35 +3,86 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Alumni Meet 2027 — Convener Committee Election</title>
+<title>St Peter's Alumni Meet 2027 — Choose our conveners</title>
 <style>
-/* x.ai / Grok language: pure black, white text, hairline borders, no gradients, no emoji. Mobile-first. */
-:root{--bg:#000;--panel:#0A0A0A;--line:#232323;--txt:#F5F5F5;--mut:#A1A1AA;--acc:#fff;--r:12px}
+:root{--bg:#000;--panel:#0A0A0A;--line:#232323;--txt:#F5F5F5;--mut:#A1A1AA;--r:12px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{font-size:16px}
 body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;line-height:1.5}
-.wrap{max-width:620px;margin:0 auto;padding:20px 16px 110px}
+.wrap{max-width:620px;margin:0 auto;padding:20px 16px 48px}
 @media(min-width:900px){.wrap{max-width:960px}}
 header{padding:28px 0 6px}
-.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
 header h1{margin:0;font-size:clamp(28px,7vw,44px);line-height:1.05;letter-spacing:-.02em;font-weight:650}
 header p{color:var(--mut);margin:10px 0 0;font-size:15px;max-width:34rem}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
 .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:12px;color:var(--mut);margin-bottom:14px;background:var(--panel)}
 .badge i{width:6px;height:6px;border-radius:99px;background:#fff;display:inline-block}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:16px 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:16px 0}
 .stats div{background:var(--panel);padding:12px 8px;text-align:center}
-.stats b{display:block;font-size:19px;letter-spacing:-.01em}
+.stats b{display:block;font-size:19px}
 .stats span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
-/* bottom tab bar on mobile, centered pills on desktop */
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;gap:4px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(0,0,0,.88);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
-.tabs button{flex:1;background:transparent;color:var(--mut);border:1px solid transparent;border-radius:10px;padding:12px 4px;font-weight:600;font-size:14px;cursor:pointer;min-height:44px}
-.tabs button.on{background:#fff;color:#000}
-@media(min-width:720px){.tabs{position:static;background:transparent;border:0;padding:0;margin:18px 0;justify-content:flex-start}.tabs button{flex:none;padding:10px 18px;border-color:var(--line);color:var(--txt)}.tabs button.on{background:#fff;color:#000}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
-.card h2{margin:0;font-size:15px;letter-spacing:-.01em}
+.card h2{margin:0;font-size:17px}
 .card small{color:var(--mut);font-size:13px}
+.sec-title{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:26px 0 4px}
+.sec-sub{color:var(--mut);font-size:14px;margin:0 0 12px}
 .grid{display:grid;gap:12px;grid-template-columns:1fr}
 @media(min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.steps3{display:grid;gap:8px;grid-template-columns:1fr;margin-top:12px}
+@media(min-width:760px){.steps3{grid-template-columns:1fr 1fr 1fr}}
+.step3{border:1px solid var(--line);border-radius:10px;padding:12px;background:#000}
+.step3 b{display:block;font-size:14px}
+.step3 .n{display:inline-flex;width:22px;height:22px;border-radius:99px;background:#fff;color:#000;font-size:12px;font-weight:800;align-items:center;justify-content:center;margin-bottom:6px}
+.step3 p{margin:4px 0 0;font-size:13px;color:#D4D4D8}
+input[type=text],input[type=search],input[type=password],input[type=number],select{width:100%;padding:13px 12px;border-radius:10px;border:1px solid var(--line);background:#000;color:#fff;font-size:16px;min-height:48px}
+input::placeholder{color:#52525B}
+input:focus,select:focus,button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
+.row{display:flex;gap:8px;margin-top:10px}
+.row input,.row select{flex:1;min-width:0}
+button{cursor:pointer;border:0;border-radius:10px;padding:12px 14px;font-weight:650;font-size:14px;min-height:48px}
+.btn-pri{background:#fff;color:#000;width:100%;margin-top:14px;font-size:17px;padding:15px}
+.btn-pri:disabled{opacity:.45}
+.btn-sec{background:transparent;color:#fff;border:1px solid var(--line)}
+.btn-dim{background:#18181B;color:#fff;border:1px solid var(--line)}
+.hintline{font-size:14px;margin-top:10px;color:#E4E4E7}
+.hintline.full{color:#fbbf24}
+.hintline.free{color:#86efac}
+.rules{margin:12px 0 0;padding:0;list-style:none}
+.rules li{font-size:14px;color:#D4D4D8;padding:7px 0 7px 28px;position:relative;border-top:1px solid #141414}
+.rules li:first-child{border-top:0}
+.rules li:before{content:"✓";position:absolute;left:4px;color:#fff;font-weight:700}
+.note{border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;margin-top:12px;color:#D4D4D8;background:#000}
+.note.lock{border-color:#52525b;color:#fff}
+.names{margin:10px 0 0;padding:0;list-style:none}
+.names li{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-top:1px solid #141414;font-size:15px}
+.names li:first-child{border-top:0}
+.bt{font-size:12px;color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:2px 8px;white-space:nowrap;align-self:center}
+.count{border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:12px;color:var(--mut);white-space:nowrap}
+.jobhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.jobhead p{margin:4px 0 0;font-size:13px;color:var(--mut)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:10px 2px 2px}
+.chipbtn{flex:none;background:transparent;color:#E4E4E7;border:1px solid var(--line);border-radius:99px;padding:10px 14px;font-size:14px;min-height:44px}
+.chipbtn.done{border-color:#fff}
+.chipbtn.cur{background:#fff;color:#000;border-color:#fff;font-weight:700}
+.candlist{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px;background:#000}
+@media(min-width:900px){.candlist{max-height:380px}}
+.cand{display:flex;align-items:center;gap:12px;padding:13px 12px;border-bottom:1px solid #141414;cursor:pointer;font-size:15px;min-height:52px}
+.cand:last-child{border-bottom:0}
+.cand.sel{background:#131313;box-shadow:inset 3px 0 0 #fff}
+.cand input{accent-color:#fff;width:20px;height:20px;flex:none}
+.cand .nm{flex:1;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{height:4px;background:#1c1c1e;border-radius:99px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:#fff}
+.resrow{padding:11px 0;border-bottom:1px solid #141414}
+.resrow:last-child{border:0}
+.wa-btn{display:inline-block;background:#25D366;color:#000;font-weight:700;font-size:14px;padding:12px 20px;border-radius:99px;text-decoration:none;min-height:44px;margin-top:12px}
+.wa-link{color:#25D366;font-weight:600}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:#000;padding:13px 18px;border-radius:12px;font-weight:600;display:none;max-width:92vw;z-index:9;font-size:14px}
+footer{color:var(--mut);font-size:12px;margin-top:30px;text-align:center}
+.meta{font-size:12px;color:var(--mut)}
+details{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:12px;background:var(--panel)}
+details summary{cursor:pointer;font-weight:650;min-height:44px}
 .timeline{display:grid;gap:8px;margin-top:12px;grid-template-columns:1fr}
 @media(min-width:760px){.timeline{grid-template-columns:1fr 1fr}}
 .phase{border:1px solid var(--line);border-radius:10px;padding:12px;background:#000}
@@ -39,150 +90,96 @@ header p{color:var(--mut);margin:10px 0 0;font-size:15px;max-width:34rem}
 .phase span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
 .phase p{margin:6px 0 0;font-size:14px;color:#D4D4D8}
 .tag{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:5px 11px;margin:6px 6px 0 0;font-size:13px;color:#E4E4E7;background:#000}
-.note{border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;margin-top:12px;color:#D4D4D8;background:#000}
-.note.ok{border-color:#3f3f46}
-.note.lock{border-color:#52525b;color:#fff}
-input[type=text],input[type=search],input[type=password],select{width:100%;padding:13px 12px;border-radius:10px;border:1px solid var(--line);background:#000;color:#fff;font-size:16px;min-height:44px}
-input::placeholder{color:#52525B}
-input:focus,select:focus,button:focus-visible{outline:2px solid #fff;outline-offset:1px}
-.row{display:flex;gap:8px;margin-top:10px}
-.row input,.row select{flex:1;min-width:0}
-button{cursor:pointer;border:0;border-radius:10px;padding:12px 14px;font-weight:650;font-size:14px;min-height:44px}
-.btn-pri{background:#fff;color:#000;width:100%;margin-top:12px;font-size:16px;padding:15px}
-.btn-pri:disabled{opacity:.5}
-.btn-sec{background:transparent;color:#fff;border:1px solid var(--line)}
-.btn-dim{background:#18181B;color:#fff;border:1px solid var(--line)}
-.hint{font-size:13px;color:var(--mut);margin-top:10px}
-a{color:#fff}
 .progress{font-size:13px;color:var(--mut);margin-top:8px}
-/* vote wizard: stacked on mobile, sidebar on desktop */
-.wiz{display:grid;gap:12px;grid-template-columns:1fr}
-@media(min-width:900px){.wiz{grid-template-columns:250px 1fr}}
-.steps{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px;display:flex;gap:6px;overflow-x:auto}
-@media(min-width:900px){.steps{flex-direction:column;overflow:visible;position:sticky;top:12px;align-self:start}}
-.stepbtn{display:flex;gap:10px;align-items:center;min-width:200px;text-align:left;background:transparent;color:#E4E4E7;border:1px solid var(--line);border-radius:10px;padding:10px;margin:0;font-size:14px;flex:none}
-@media(min-width:900px){.stepbtn{min-width:0;width:100%;margin:2px 0}}
-.stepbtn .n{width:24px;height:24px;border-radius:99px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none;color:var(--mut)}
-.stepbtn.done .n{background:#fff;color:#000;border-color:#fff}
-.stepbtn.cur{border-color:#fff}
-.stepbtn small{display:block;color:var(--mut);font-weight:400;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
-.candlist{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px;background:#000}
-@media(min-width:900px){.candlist{max-height:380px}}
-.cand{display:flex;align-items:center;gap:12px;padding:13px 12px;border-bottom:1px solid #141414;cursor:pointer;font-size:15px;min-height:48px}
-.cand:last-child{border-bottom:0}
-.cand.sel{background:#131313;box-shadow:inset 2px 0 0 #fff}
-.cand input{accent-color:#fff;width:18px;height:18px;flex:none}
-.cand .nm{flex:1;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cand .bt{font-size:12px;color:var(--mut);flex:none;border:1px solid var(--line);border-radius:99px;padding:2px 8px}
-.bar{height:4px;background:#1c1c1e;border-radius:99px;overflow:hidden;margin-top:8px}
-.bar i{display:block;height:100%;background:#fff}
-.resrow{padding:11px 0;border-bottom:1px solid #141414}
-.resrow:last-child{border:0}
-.nomrow{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:12px 0;border-bottom:1px solid #141414;font-size:14px}
-.nomrow:last-child{border:0}
-.count{border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:12px;color:var(--mut);white-space:nowrap}
-.toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);background:#fff;color:#000;padding:12px 18px;border-radius:12px;font-weight:600;display:none;max-width:92vw;z-index:9;font-size:14px}
-.wa-btn{display:inline-block;background:#25D366;color:#000;font-weight:700;font-size:14px;padding:12px 20px;border-radius:99px;text-decoration:none;min-height:44px}
-.wa-link{color:#25D366;font-weight:600}
-@media(min-width:720px){.toast{bottom:24px}}
-footer{color:var(--mut);font-size:12px;margin-top:26px;text-align:center}
-.meta{font-size:12px;color:var(--mut)}
-details summary{cursor:pointer;color:#fff;padding:6px 0}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-<div class="badge" id="meetBadge"><i></i>Alumni Meet · Nov 2027 · 2026–27</div>
-<div class="eyebrow">Convener committee election</div>
-<h1 id="meetTitle">Elect the Conveners</h1>
-<p>Our Chairman is the Principal (not elected). We will elect 7 conveners in 2026 for our school meet in November 2027.</p>
-<div style="margin-top:12px"><a class="wa-btn" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">Follow updates on WhatsApp</a></div>
+<div class="badge" id="meetBadge"><i></i>St Peter's · Alumni Meet · Nov 2027</div>
+<div class="eyebrow">Old students · one page · 2 minutes</div>
+<h1>Choose our 7 conveners</h1>
+<p>Our Chairman is the Principal (not elected). Below: add your name, then vote when voting opens.</p>
+<div><a class="wa-btn" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">Follow updates on WhatsApp</a></div>
 </header>
 
 <div class="stats">
 <div><b id="tVotes">0</b><span>Votes</span></div>
 <div><b id="tCands">0</b><span>Names</span></div>
-<div><b id="tOff">7</b><span>Conveners</span></div>
-<div><b>760</b><span>Pool ~</span></div>
+<div><b id="tOff">7</b><span>Jobs</span></div>
 </div>
 
-<div class="tabs" id="tabs">
-<button id="tabPlan" class="on" onclick="show('plan')">Plan</button>
-<button id="tabNominate" onclick="show('nominate')">Add names</button>
-<button id="tabVote" onclick="show('vote')">Vote</button>
-<button id="tabRes" onclick="show('res')">Results</button>
+<div class="steps3">
+<div class="step3"><span class="n">1</span><b>Add your name</b><p>Standing yourself? Fill the form — 30 seconds.</p></div>
+<div class="step3"><span class="n">2</span><b>Vote</b><p>Pick one person per job when voting opens.</p></div>
+<div class="step3"><span class="n">3</span><b>Results</b><p>See who is leading, right here.</p></div>
 </div>
 
-<div id="panePlan">
-<div class="card"><h2>How this works — 3 easy steps</h2>
-<div class="timeline" style="margin-top:10px">
-<div class="phase"><span>Step 1 · now</span><b>Add names</b><p>Type the name of anyone you want to stand, under their job. Anyone can add a name.</p></div>
-<div class="phase"><span>Step 2 · later</span><b>Vote</b><p>When voting opens, tap one name for each of the 7 jobs and press Cast my vote. One vote per person.</p></div>
-<div class="phase"><span>Step 3 · anytime</span><b>See results</b><p>Come back here to see who is leading for each job.</p></div>
-</div>
-<div class="row"><button class="btn-sec" onclick="show('nominate')">Start with Step 1</button></div></div>
-<div class="card" style="margin-top:12px"><h2>Chairman <span class="meta">not elected here</span></h2><div id="chairLine" style="font-size:14px;margin-top:6px">Our Principal chairs the meet.</div></div>
-<div class="card" style="margin-top:12px"><h2>Road to November 2027</h2><small>Sep 2026 → Nov 2027</small>
-<div id="planGrid" class="timeline"></div><div id="freezeNote" class="note ok"></div></div>
-<div class="grid grid2" style="margin-top:12px">
-<div class="card"><h2>7 jobs we will elect</h2><small>One vote per person, for all 7 jobs</small><div id="electList" style="margin-top:8px"></div></div>
-<div class="card"><h2>Other teams — decided later</h2><small>No vote needed for these; the committee will form them in 2027</small><div id="cooptList" style="margin-top:8px"></div></div>
-</div>
-<div class="card" style="margin-top:12px"><h2>One important rule</h2><small>Once voting starts, the job list cannot change — so nobody's vote goes waste.</small>
-<div class="row"><button class="btn-dim" onclick="show('nominate')">1 · Add names</button><button class="btn-sec" onclick="show('vote')">2 · Vote</button></div></div>
-</div>
-
-<div id="paneNominate" style="display:none">
-<div class="card"><h2>Add names</h2><small>Write the person's full name. If you know their batch year, add it: <b>Anita Rao (2004)</b>.</small>
-<div class="row"><input id="nomSearch" type="search" placeholder="Search names…" oninput="renderNominate()"/></div>
-<div class="row"><select id="nomOffice" onchange="renderNominate()"></select></div>
-</div>
-<div id="nomGrid" class="grid grid2" style="margin-top:12px"></div>
-<div class="card" style="margin-top:12px"><h2>Missing a job? <span class="meta">only before voting starts</span></h2><small>You can add a new job now. Once voting starts, the list is fixed.</small>
-<div class="row"><input id="newOffice" type="text" maxlength="40" placeholder="Job title, e.g. Sports Convener"/></div>
-<div class="row"><input id="newOfficeNom" type="text" maxlength="60" placeholder="First person's name"/><button class="btn-dim" onclick="addOffice()">Add job</button></div></div>
-</div>
-
-<div id="paneVote" style="display:none">
-<div class="wiz">
-<div class="steps" id="voteSteps"></div>
-<div>
+<h2 class="sec-title">Step 1 — Stand for a job</h2>
+<p class="sec-sub">Want to stand? Add your own name below.</p>
 <div class="card">
-<div style="display:flex;gap:8px;align-items:baseline;justify-content:space-between"><h2 id="voteTitle">Vote</h2><span class="meta" id="voteCount"></span></div>
-<small id="voteDesc"></small>
+<label for="standName">Your full name</label>
+<input id="standName" type="text" maxlength="60" placeholder="e.g. Anita Rao" autocomplete="off"/>
+<label for="standBatch">Your batch year</label>
+<input id="standBatch" type="number" inputmode="numeric" min="1950" max="2027" placeholder="e.g. 2004"/>
+<label for="standJob">Which job?</label>
+<select id="standJob"></select>
+<div id="slotHint" class="hintline"></div>
+<button id="standBtn" class="btn-pri" onclick="stand()">Add my name</button>
+<ul class="rules">
+<li>Every batch gets <b>2 places</b> for each job.</li>
+<li>One person, one job — you can stand for only one.</li>
+<li>The job list gets fixed once voting starts.</li>
+</ul>
+</div>
+
+<h2 class="sec-title">Who is standing</h2>
+<p class="sec-sub">Tap a name's job to see all. Use search to find your batch.</p>
+<div class="card">
+<input id="peepSearch" type="search" placeholder="Search name or batch year…" oninput="renderJobs()"/>
+</div>
+<div id="jobGrid" class="grid grid2" style="margin-top:12px"></div>
+
+<h2 class="sec-title">Step 2 — Vote</h2>
+<p class="sec-sub" id="voteSub">Pick one person for each of the 7 jobs.</p>
+<div id="voteClosed" class="note lock">We are still collecting names — voting will open soon. Please come back then.</div>
+<div id="voteOpen" style="display:none">
+<div class="chips" id="voteSteps"></div>
+<div class="card" style="margin-top:12px">
+<div class="jobhead"><div><h2 id="voteTitle">Vote</h2><p id="voteDesc"></p></div><span class="count" id="voteCount"></span></div>
 <div class="row"><input id="voteSearch" type="search" placeholder="Search name…" oninput="renderVoteList()"/></div>
 <div id="voteList" class="candlist"></div>
-<div class="row"><input id="voteWritein" type="text" maxlength="60" placeholder="Name not in the list? Type it here"/></div>
+<div class="row"><input id="voteWritein" type="text" maxlength="60" placeholder="Name not in the list? Type full name + batch"/></div>
 <div class="row"><button class="btn-dim" onclick="stepMove(-1)">Back</button><button class="btn-sec" onclick="stepMove(1)">Next job</button><button class="btn-dim" onclick="useWritein()">Add this name</button></div>
 </div>
-<div class="card" style="margin-top:12px"><div id="voteClosed" class="note lock" style="display:none;margin:0 0 10px">We are still collecting names — voting will open soon. You can look at the names below, but you cannot vote yet.</div><label><b>Your name</b></label>
+<div class="card" style="margin-top:12px"><label for="voter"><b>Your name</b></label>
 <input id="voter" type="text" maxlength="60" placeholder="Your full name"/>
 <div id="prog" class="progress"></div>
 <button id="voteBtn" class="btn-pri" onclick="submitVote()">Cast my vote</button>
-<div class="hint">Tap one name for each job, then press the button.</div></div>
-</div>
-</div>
+<p class="sec-sub" style="margin:10px 0 0">Tap one name for each job, then press the button. One vote per person.</p></div>
 </div>
 
-<div id="paneRes" style="display:none">
-<div class="card"><h2>Results</h2><small>See who is leading for each job.</small>
-<div class="row"><select id="resOffice" onchange="renderRes()"><option value="">All jobs</option></select><input id="resSearch" type="search" placeholder="Search name…" oninput="renderRes()"/></div></div>
+<h2 class="sec-title">Step 3 — Results</h2>
+<p class="sec-sub">Who is leading for each job.</p>
+<div class="card">
+<div class="row"><select id="resOffice" onchange="renderRes()"><option value="">All jobs</option></select><input id="resSearch" type="search" placeholder="Search name…" oninput="renderRes()"/></div>
+</div>
 <div id="resGrid" class="grid grid2" style="margin-top:12px"></div>
-<div class="card" style="margin-top:12px"><h2>Recent votes</h2><div id="recent" style="font-size:14px;color:#D4D4D8"></div></div>
-</div>
 
-<div id="paneAdmin" style="display:none">
-<div class="card"><h2>Admin</h2><small>Committee only. Nothing here is shown to voters.</small>
+<div id="adminSec" style="display:none">
+<h2 class="sec-title">Committee admin</h2>
+<p class="sec-sub">Secret page. Nothing here shows to voters.</p>
+<div class="card">
 <div id="adminLock">
-<div class="row"><input id="adminPw" type="password" inputmode="text" autocomplete="current-password" placeholder="Admin password" style="flex:1"/></div>
+<label for="adminPw">Password</label>
+<div class="row"><input id="adminPw" type="password" autocomplete="current-password" placeholder="Admin password"/></div>
 <div class="row"><button class="btn-sec" onclick="adminUnlock()">Unlock</button></div>
-<div class="hint" id="adminHint"></div>
+<div class="hintline" id="adminHint" style="color:var(--mut)"></div>
 </div>
 <div id="adminTools" style="display:none">
 <div class="note ok" id="adminStatus"></div>
 <div class="row"><button class="btn-sec" id="voteToggle" onclick="adminToggleVoting()">Open voting</button></div>
-<div class="row"><button class="btn-sec" onclick="adminExport()">Download data (JSON)</button></div>
+<div class="row"><button class="btn-sec" onclick="adminExport()">Download all data</button></div>
 <div class="row"><button class="btn-dim" onclick="adminReset('votes')">Delete all votes (keep names)</button></div>
 <div class="row"><button class="btn-dim" onclick="adminReset('all')">Delete everything</button></div>
 <div class="row"><button class="btn-dim" onclick="adminLock()">Lock</button></div>
@@ -190,78 +187,91 @@ details summary{cursor:pointer;color:#fff;padding:6px 0}
 </div>
 </div>
 
+<details><summary>Full plan to November 2027</summary>
+<div id="planGrid" class="timeline"></div>
+<div id="freezeNote" class="note ok"></div>
+<div style="margin-top:10px"><div class="meta">Jobs we elect</div><div id="electList"></div></div>
+<div style="margin-top:6px"><div class="meta">Other teams (formed in 2027, no vote)</div><div id="cooptList"></div></div>
+</details>
+
 <footer>Built with love for St Peter's · Alumni Meet Nov 2027 · <a class="wa-link" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">WhatsApp updates</a></footer>
 </div>
 <div id="toast" class="toast"></div>
 <script>
 let OFFICES=[],CANDS={},RESULTS={},RECENT=[],META={};
-let sel={},writeins={},addDrafts={},voteIdx=0,voteLimit=30,lastVoteSlug='';
-let lastSig='';
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3400)}
-function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function batchOf(n){const m=(n||'').match(/\b(19|20)\d{2}\b/);return m?m[0]:''}
-function show(w){['plan','nominate','vote','res','admin'].forEach(k=>{const p=document.getElementById('pane'+k[0].toUpperCase()+k.slice(1));if(p)p.style.display=w===k?'block':'none';const t=document.getElementById('tab'+k[0].toUpperCase()+k.slice(1));if(t)t.className=w===k?'on':'';});if(w==='res')load(true);if(w==='vote')renderVoteShell();if(w==='admin')renderAdmin();window.scrollTo({top:0});}
-// Admin is reachable only via the secret ADMIN_PATH URL (never linked publicly).
+let sel={},writeins={},voteIdx=0,voteLimit=30,lastVoteSlug='';
 const IS_ADMIN_ROUTE=window.location.pathname.replace(/\/+$/,'')!=='';
-if(IS_ADMIN_ROUTE){const b=document.createElement('button');b.id='tabAdmin';b.textContent='Admin';b.onclick=()=>show('admin');document.getElementById('tabs').appendChild(b);}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3600)}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function batchOf(n){const m=(n||'').match(/\b(19[5-9]\d|20[0-2]\d)\b/);return m?m[0]:''}
+function personOf(n){return (n||'').replace(/\(.*?\)/g,' ').replace(/\b(19[5-9]\d|20[0-2]\d)\b/g,' ').replace(/\s+/g,' ').trim().toLowerCase()}
 async function api(p,o){const r=await fetch(p,{headers:{'Content-Type':'application/json'},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j}
-function sigOf(s){try{return JSON.stringify([s.offices.map(o=>o.slug),Object.entries(s.candidates).map(([k,v])=>[k,v.length])])}catch(e){return ''}}
-function isTypingIn(paneId){const a=document.activeElement;return !!(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT')&&document.getElementById(paneId)&&document.getElementById(paneId).contains(a));}
-function snapshotDrafts(){OFFICES.forEach(o=>{const el=document.getElementById('add_'+o.slug);if(el)addDrafts[o.slug]=el.value;});const vw=document.getElementById('voteWritein');if(vw&&curOffice())writeins[curOffice().slug]=writeins[curOffice().slug]&&vw.value.trim()===''?writeins[curOffice().slug]:vw.value||writeins[curOffice().slug]||'';}
-async function load(force){
+async function load(){
 try{
 const s=await api('/api/state');
-const sig=sigOf(s);
-const nomTyping=isTypingIn('paneNominate'),voteTyping=isTypingIn('paneVote');
 OFFICES=s.offices;CANDS=s.candidates;RESULTS=s.results||{};RECENT=s.recent||[];META=s;
-if(s.election){document.getElementById('meetBadge').innerHTML=`<i></i>${esc(s.election)} · ${esc(s.meet_when||'Nov 2027')} · ${esc(s.term||'2026–27')}`;document.getElementById('meetTitle').textContent=`Elect the Conveners — ${s.election}`;}
+if(s.election){document.getElementById('meetBadge').innerHTML=`<i></i>St Peter's · ${esc(s.election)} · ${esc(s.meet_when||'Nov 2027')}`;}
 document.getElementById('tVotes').textContent=s.total_votes;
 document.getElementById('tCands').textContent=Object.values(s.candidates).reduce((a,b)=>a+b.length,0);
 document.getElementById('tOff').textContent=s.offices.length;
-renderPlan(s);
-if(force||!nomTyping||sig!==lastSig){renderNominate();}
-if(force||!voteTyping||sig!==lastSig){renderVoteShell();}
-else{updProg();}
-if(force||!isTypingIn('paneRes')||sig!==lastSig){renderRes();}
-lastSig=sig;
+fillJobSelect();renderJobs();renderVote();renderRes();renderPlan(s);
+if(IS_ADMIN_ROUTE){document.getElementById('adminSec').style.display='block';renderAdmin();if(!window._admSeen){window._admSeen=true;window.scrollTo({top:document.getElementById('adminSec').offsetTop});}}
+if(IS_ADMIN_ROUTE){document.getElementById('adminSec').style.display='block';renderAdmin();}
 }catch(e){}
 }
-function renderPlan(s){
-if(s.chairman){document.getElementById('chairLine').textContent=`${s.chairman.title}: ${s.chairman.held_by} — ${s.chairman.desc}`;}
-document.getElementById('planGrid').innerHTML=(s.plan||[]).map(p=>`<div class="phase"><span>${esc(p.when)}</span><b>${esc(p.phase)}</b><p>${esc(p.what)}</p></div>`).join('');
-document.getElementById('electList').innerHTML=(s.elected_now||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
-document.getElementById('cooptList').innerHTML=(s.coopt_later||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
-const f=document.getElementById('freezeNote');
-if(s.offices_frozen){f.className='note lock';f.textContent=`Voting has started — ${s.total_votes} vote(s) so far. The job list is now fixed.`;}
-else{f.className='note ok';f.textContent='We are collecting names now. The job list gets fixed once voting starts.';}
+// STAND (self-nomination: 2 places per batch per job, one person one job)
+function fillJobSelect(){
+const el=document.getElementById('standJob');const cur=el.value;
+el.innerHTML=OFFICES.map(o=>`<option value="${o.slug}">${esc(o.title)} — ${esc(o.desc||'')}</option>`).join('');
+if(cur)el.value=cur;
 }
-function renderNominate(keep){
-OFFICES.forEach(o=>{const el=document.getElementById('add_'+o.slug);if(el)addDrafts[o.slug]=el.value;});
-const q=(document.getElementById('nomSearch').value||'').toLowerCase();
-const sel2=document.getElementById('nomOffice');
-const cur=sel2.value;
-sel2.innerHTML='<option value="">All jobs</option>'+OFFICES.map(o=>`<option value="${o.slug}">${esc(o.title)}</option>`).join('');
-sel2.value=cur;
-const f=sel2.value;
-const offices=OFFICES.filter(o=>!f||o.slug===f);
-document.getElementById('nomGrid').innerHTML=offices.map(o=>{
-const list=(CANDS[o.slug]||[]).filter(c=>!q||c.name.toLowerCase().includes(q));
-const prev=list.slice(0,3).map(c=>esc(c.name)).join(', ')||'—';
-return `<div class="card"><div class="nomrow"><div><b>${esc(o.title)}</b><br/><small>${esc(o.desc||'')} · ${esc(prev)}${list.length>3?' …':''}</small></div><span class="count">${list.length}${q?' / '+((CANDS[o.slug]||[]).length):''}</span></div>
-<div class="row"><input id="add_${o.slug}" type="text" maxlength="60" placeholder="Type full name" value="${esc(addDrafts[o.slug]||'')}" oninput="addDrafts['${o.slug}']=this.value"/><button class="btn-dim" onclick="addCand('${o.slug}')">Add</button></div></div>`}).join('')||'<div class="card">No match.</div>';
-OFFICES.forEach(o=>{const el=document.getElementById('add_'+o.slug);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')addCand(o.slug)})});
+function slotHint(){
+const b=(document.getElementById('standBatch').value||'').trim();
+const j=document.getElementById('standJob').value;
+const nm=(document.getElementById('standName').value||'').trim();
+const h=document.getElementById('slotHint');
+const o=OFFICES.find(x=>x.slug===j);if(!o){h.textContent='';return;}
+if(!/^(19[5-9]\d|20[0-2]\d)$/.test(b)){h.className='hintline';h.textContent=`${o.title}: every batch gets 2 places.`;return;}
+const taken=(CANDS[j]||[]).filter(c=>batchOf(c.name)===b).length;
+const mine=nm&&personOf(nm).length>1?(OFFICES.filter(x=>x.slug!==j).find(x=>(CANDS[x.slug]||[]).some(c=>personOf(c.name)===personOf(nm)&&personOf(nm)))):null;
+if(taken>=2){h.className='hintline full';h.textContent=`Batch ${b} · ${o.title}: full (2 of 2 taken). Try another job.`;}
+else{h.className='hintline free';h.textContent=`Batch ${b} · ${o.title}: ${2-taken} of 2 places left.`+(mine?` Note: this name already stands for ${mine.title}.`:'');}
 }
-async function addCand(race){
-const inp=document.getElementById('add_'+race);const name=(inp.value||'').trim();if(!name)return toast('Please type a name first');
-try{const r=await api('/api/candidates',{method:'POST',body:JSON.stringify({race,name})});sel[race]=r.id;delete writeins[race];addDrafts[race]='';toast('Added '+name+'. Thank you!');load(true);}catch(e){toast(e.message)}
+['standName','standBatch'].forEach(id=>document.getElementById(id).addEventListener('input',slotHint));
+document.getElementById('standJob').addEventListener('change',slotHint);
+async function stand(){
+const nm=(document.getElementById('standName').value||'').trim();
+const b=(document.getElementById('standBatch').value||'').trim();
+const j=document.getElementById('standJob').value;
+if(nm.length<2)return toast('Please type your full name');
+if(!/^(19[5-9]\d|20[0-2]\d)$/.test(b))return toast('Please type your 4-digit batch year, e.g. 2004');
+if(!j)return toast('Please pick a job');
+const btn=document.getElementById('standBtn');btn.disabled=true;
+try{await api('/api/candidates',{method:'POST',body:JSON.stringify({race:j,name:`${nm} (${b})`})});
+document.getElementById('standName').value='';document.getElementById('standBatch').value='';
+toast('You are standing. Thank you!');load();}catch(e){toast(e.message)}finally{btn.disabled=false}
 }
-async function addOffice(){
-const t=document.getElementById('newOffice');const n=document.getElementById('newOfficeNom');
-if(!(t.value||'').trim())return toast('Please type a job title first');
-try{const r=await api('/api/offices',{method:'POST',body:JSON.stringify({title:t.value.trim(),first_nominee:(n.value||'').trim()||undefined})});t.value='';n.value='';toast('Job added: '+r.title);load(true);}catch(e){toast(e.message)}
+// WHO IS STANDING
+function renderJobs(){
+const q=(document.getElementById('peepSearch').value||'').toLowerCase();
+document.getElementById('jobGrid').innerHTML=OFFICES.map(o=>{
+const all=CANDS[o.slug]||[];
+const list=all.filter(c=>!q||c.name.toLowerCase().includes(q));
+return `<div class="card"><div class="jobhead"><div><h2>${esc(o.title)}</h2><p>${esc(o.desc||'')}</p></div><span class="count">${all.length} name${all.length===1?'':'s'}</span></div>
+<ul class="names">${list.map(c=>`<li><span>${esc(c.name)}</span>${batchOf(c.name)?`<span class="bt">${esc(batchOf(c.name))}</span>`:''}</li>`).join('')||'<li><span style="color:var(--mut)">No names yet — be the first above.</span></li>'}</ul></div>`}).join('');
+slotHint();
 }
+// VOTE
 function curOffice(){return OFFICES[Math.min(voteIdx,OFFICES.length-1)]}
-function renderVoteShell(keep){
+function renderVote(){
+const open=!!META.voting_open;
+document.getElementById('voteClosed').style.display=open?'none':'block';
+document.getElementById('voteOpen').style.display=open?'block':'none';
+document.getElementById('voteSub').textContent=open?'Pick one person for each of the 7 jobs.':'Voting opens after names are in. You will pick one person per job.';
+if(!open)return;
+renderVoteShell();
+}
+function renderVoteShell(){
 if(!OFFICES.length)return;
 voteIdx=Math.max(0,Math.min(voteIdx,OFFICES.length-1));
 const o=curOffice();
@@ -270,13 +280,13 @@ const vl0=document.getElementById('voteList');const scTop=vl0?vl0.scrollTop:0;
 const done=OFFICES.filter(x=>sel[x.slug]||(writeins[x.slug]||'').trim()).length;
 document.getElementById('voteSteps').innerHTML=OFFICES.map((oo,i)=>{
 const cls=sel[oo.slug]||(writeins[oo.slug]||'').trim()?'done':(i===voteIdx?'cur':'');
-return `<button class="stepbtn ${cls}" onclick="jumpStep(${i})"><span class="n">${sel[oo.slug]||(writeins[oo.slug]||'').trim()?'✓':(i+1)}</span><span><b>${esc(oo.title)}</b><small>${sel[oo.slug]?esc(nameOf(oo.slug,sel[oo.slug])):(writeins[oo.slug]||'').trim()?esc(writeins[oo.slug].trim()):(CANDS[oo.slug]||[]).length+' names'}</small></span></button>`}).join('')
-+``;
+return `<button class="chipbtn ${cls}" onclick="jumpStep(${i})">${sel[oo.slug]||(writeins[oo.slug]||'').trim()?'✓ ':''}${esc(oo.title)}</button>`}).join('');
 renderVoteList();
 const vl1=document.getElementById('voteList');if(vl1)vl1.scrollTop=scTop;
 const wbox=document.getElementById('voteWritein');
 if(wbox&&document.activeElement!==wbox&&wbox.value!==(writeins[o.slug]||''))wbox.value=writeins[o.slug]||'';
-updProg();
+const btn=document.getElementById('voteBtn');btn.disabled=false;
+document.getElementById('prog').textContent=`You picked ${done} of ${OFFICES.length}`;
 }
 function nameOf(race,id){const c=(CANDS[race]||[]).find(x=>x.id===id);return c?c.name:''}
 function renderVoteList(){
@@ -296,11 +306,9 @@ return `<label class="cand ${sel[o.slug]===c.id?'sel':''}"><input type="radio" n
 function clearW(r){delete writeins[r];const el=document.getElementById('voteWritein');if(el)el.value='';renderVoteShell();}
 function jumpStep(i){saveWritein();voteIdx=i;voteLimit=30;document.getElementById('voteSearch').value='';document.getElementById('voteWritein').value=writeins[curOffice().slug]||'';renderVoteShell();}
 function stepMove(d){saveWritein();voteIdx=Math.max(0,Math.min(OFFICES.length-1,voteIdx+d));voteLimit=30;document.getElementById('voteSearch').value='';const o=curOffice();document.getElementById('voteWritein').value=writeins[o.slug]||'';renderVoteShell();}
-function saveWritein(){const o=curOffice();if(!o)return;const v=document.getElementById('voteWritein').value||'';if(v.trim()){writeins[o.slug]=v;delete sel[o.slug];} }
+function saveWritein(){const o=curOffice();if(!o)return;const v=document.getElementById('voteWritein').value||'';if(v.trim()){writeins[o.slug]=v;delete sel[o.slug];}}
 function useWritein(){const o=curOffice();const v=(document.getElementById('voteWritein').value||'').trim();if(!v)return toast('Please type the name first');writeins[o.slug]=v;delete sel[o.slug];renderVoteShell();toast('Name saved for '+o.title);}
 function pick(race,id){sel[race]=id;delete writeins[race];if(curOffice()&&curOffice().slug===race){document.getElementById('voteWritein').value='';}renderVoteShell();}
-function updProg(){const done=OFFICES.filter(o=>sel[o.slug]||(writeins[o.slug]||'').trim()).length;document.getElementById('prog').textContent=`You picked ${done} of ${OFFICES.length}`;
-const open=!!META.voting_open;document.getElementById('voteClosed').style.display=open?'none':'block';document.getElementById('voteBtn').disabled=!open;}
 async function submitVote(){
 saveWritein();
 if(!META.voting_open)return toast('Voting has not opened yet — we are still collecting names.');
@@ -311,8 +319,9 @@ OFFICES.forEach(o=>{if(sel[o.slug])choices[o.slug]=sel[o.slug];const w=(writeins
 const missing=OFFICES.filter(o=>!choices[o.slug]&&!wins[o.slug]);
 if(missing.length){voteIdx=OFFICES.indexOf(missing[0]);renderVoteShell();return toast('Please pick someone for: '+missing.map(o=>o.title).join(', '));}
 const btn=document.getElementById('voteBtn');btn.disabled=true;
-try{await api('/api/vote',{method:'POST',body:JSON.stringify({voter,choices,writeins:wins})});toast('Thank you '+voter+' — your vote is counted.');sel={};writeins={};voteIdx=0;document.getElementById('voter').value='';document.getElementById('voteWritein').value='';load(true);show('res');}catch(e){toast(e.message)}finally{btn.disabled=false}
+try{await api('/api/vote',{method:'POST',body:JSON.stringify({voter,choices,writeins:wins})});toast('Thank you '+voter+' — your vote is counted.');sel={};writeins={};voteIdx=0;document.getElementById('voter').value='';document.getElementById('voteWritein').value='';load();}catch(e){toast(e.message)}finally{btn.disabled=false}
 }
+// RESULTS
 function renderRes(){
 const selO=document.getElementById('resOffice');
 const cur=selO.value;
@@ -320,14 +329,23 @@ selO.innerHTML='<option value="">All jobs</option>'+OFFICES.map(o=>`<option valu
 selO.value=cur;
 const f=selO.value,q=(document.getElementById('resSearch').value||'').toLowerCase();
 const offices=OFFICES.filter(o=>!f||o.slug===f);
+const anyVotes=(META.total_votes||0)>0;
 document.getElementById('resGrid').innerHTML=offices.map(o=>{
 let arr=(RESULTS[o.slug]||[]).filter(r=>!q||r.name.toLowerCase().includes(q));
 const top=arr.slice(0,3),rest=arr.slice(3);
-const row=r=>`<div class="resrow"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><span>${r.votes} · ${r.pct}%</span></div><div class="bar"><i style="width:${r.pct}%"></i></div></div>`;
-return `<div class="card"><h2>${esc(o.title)}</h2><small>${arr.length} name(s)${q?' (matching your search)':''}</small>${top.map(row).join('')||'<p style="color:var(--mut)">No names yet.</p>'}${rest.length?`<details><summary>See ${rest.length} more</summary>${rest.map(row).join('')}</details>`:''}</div>`}).join('')||'<div class="card">No match.</div>';
-document.getElementById('recent').innerHTML=RECENT.length?RECENT.map(v=>`${esc(v.voter)} <span style="opacity:.6">· ${new Date(v.created_at+'Z').toLocaleString()}</span>`).join('<br>'):'No votes yet.';
+const row=r=>`<div class="resrow"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><span>${r.votes} vote${r.votes===1?'':'s'}</span></div><div class="bar"><i style="width:${r.pct}%"></i></div></div>`;
+return `<div class="card"><h2>${esc(o.title)}</h2><small>${anyVotes?arr.length+' name(s)':"Votes will appear here"}</small>${anyVotes?(top.map(row).join('')||'<p style="color:var(--mut)">No names yet.</p>')+(rest.length?`<details style="border:0;padding:8px 0 0"><summary>See ${rest.length} more</summary>${rest.map(row).join('')}</details>`:''):'<p style="color:var(--mut)">Voting has not opened yet.</p>'}</div>`}).join('')||'<div class="card">No match.</div>';
 }
-// ADMIN (committee only — password in ADMIN_TOKEN env)
+// PLAN (details)
+function renderPlan(s){
+document.getElementById('planGrid').innerHTML=(s.plan||[]).map(p=>`<div class="phase"><span>${esc(p.when)}</span><b>${esc(p.phase)}</b><p>${esc(p.what)}</p></div>`).join('');
+document.getElementById('electList').innerHTML=(s.elected_now||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+document.getElementById('cooptList').innerHTML=(s.coopt_later||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+const f=document.getElementById('freezeNote');
+if(s.offices_frozen){f.className='note lock';f.textContent=`Voting has started — ${s.total_votes} vote(s) so far. The job list is now fixed.`;}
+else{f.className='note ok';f.textContent='We are collecting names now. The job list gets fixed once voting starts.';}
+}
+// ADMIN (secret path only)
 let ADMINTOK=sessionStorage.getItem('adminTok')||'';
 function adminHeaders(){return {'Content-Type':'application/json','X-Admin-Token':ADMINTOK};}
 function renderAdmin(){
@@ -335,16 +353,10 @@ const unlocked=!!ADMINTOK;
 document.getElementById('adminLock').style.display=unlocked?'none':'block';
 document.getElementById('adminTools').style.display=unlocked?'block':'none';
 if(unlocked){
-document.getElementById('adminStatus').textContent=`Unlocked · ${META.total_votes||0} ballot(s) · ${Object.values(CANDS).reduce((a,b)=>a+b.length,0)} nominee(s) · voting ${META.voting_open?'OPEN':'closed'}`;
+document.getElementById('adminStatus').textContent=`Unlocked · ${META.total_votes||0} vote(s) · ${Object.values(CANDS).reduce((a,b)=>a+b.length,0)} name(s) · voting ${META.voting_open?'OPEN':'closed'}`;
 document.getElementById('voteToggle').textContent=META.voting_open?'Close voting':'Open voting';
 }
-else document.getElementById('adminHint').textContent=META.admin_enabled?'Enter the committee password.':'Admin password not set on server (ADMIN_TOKEN empty) — export is currently open.';
-}
-async function adminToggleVoting(){
-try{
-const r=await api('/api/admin/voting',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,open:!META.voting_open})});
-toast(r.voting_open?'Voting is now open.':'Voting closed. Collecting names only.');load(true);renderAdmin();
-}catch(e){toast(e.message);}
+else document.getElementById('adminHint').textContent=META.admin_enabled?'Enter the committee password.':'Admin password is not set — ask the tech volunteer.';
 }
 async function adminUnlock(){
 const pw=(document.getElementById('adminPw').value||'').trim();
@@ -357,25 +369,31 @@ toast('Admin unlocked');renderAdmin();
 }catch(e){toast(e.message);}
 }
 function adminLock(){ADMINTOK='';sessionStorage.removeItem('adminTok');renderAdmin();}
+async function adminToggleVoting(){
+try{
+const r=await api('/api/admin/voting',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,open:!META.voting_open})});
+toast(r.voting_open?'Voting is now open.':'Voting closed. Collecting names only.');load();
+}catch(e){toast(e.message);}
+}
 async function adminExport(){
 try{
 const r=await fetch('/api/export',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK})});
 const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Export failed');
 const blob=new Blob([JSON.stringify(j,null,2)],{type:'application/json'});
-const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='alumni-meet-2027-export.json';a.click();
+const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='st-peters-2027-export.json';a.click();
 setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 toast('Downloaded');
 }catch(e){toast(e.message);if(/password|admin/i.test(e.message))adminLock();}
 }
 async function adminReset(what){
 if(!confirm(what==='all'?'Delete EVERYTHING (all names and votes)? This cannot be undone.':'Delete all votes? The names will stay.'))return;
-try{await api('/api/reset',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,what})});toast('Done');load(true);renderAdmin();}catch(e){toast(e.message);if(/token|password|admin/i.test(e.message))adminLock();}
+try{await api('/api/reset',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,what})});toast('Done');load();}catch(e){toast(e.message);if(/token|password|admin/i.test(e.message))adminLock();}
 }
-document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')adminUnlock();});
 document.getElementById('voter').addEventListener('keydown',e=>{if(e.key==='Enter')submitVote()});
+document.getElementById('standName').addEventListener('keydown',e=>{if(e.key==='Enter')stand()});
+document.getElementById('standBatch').addEventListener('keydown',e=>{if(e.key==='Enter')stand()});
 document.getElementById('voteWritein').addEventListener('input',e=>{const o=curOffice();if(!o)return;if(e.target.value.trim()&&sel[o.slug])delete sel[o.slug];});
-['newOffice','newOfficeNom'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')addOffice()}));
-load();setInterval(()=>load(false),8000);
-if(IS_ADMIN_ROUTE)show('admin');
+document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')adminUnlock()});
+load();setInterval(load,9000);
 </script>
 </body></html>

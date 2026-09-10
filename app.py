@@ -21,7 +21,7 @@ CHAIRMAN = {"title": "Chairman", "held_by": "Principal or his appointee",
 
 # Public plan shown on the homepage so any visitor understands the road to Nov 2027.
 PLAN = [
-    {"phase": "1. Foundation", "when": "Sep – Dec 2026", "what": "Add names and elect the Convener crew under the Chairman. The job list gets fixed once voting starts."},
+    {"phase": "1. Foundation", "when": "Sep – Dec 2026", "what": "Self-nomination: every batch gets 2 places for each job, one person one job. The job list gets fixed once voting starts."},
     {"phase": "2. Build", "when": "Jan – Jun 2027", "what": "Directory, school premises layout & permissions, budget, sponsors, batch coordinators, save-the-date + WhatsApp updates."},
     {"phase": "3. Execution", "when": "Jul – Oct 2027", "what": "Registrations, food, stay & travel help for outstation alumni, culture & sports program, mementos. Registration closes Oct 2027."},
     {"phase": "4. Meet + Audit", "when": "Nov – Dec 2027", "what": "Alumni Meet Nov 2027, felicitations, AGM, accounts + directory published."},
@@ -166,6 +166,40 @@ def all_races(conn):
 
 def norm(s):
     return (s or "").strip()
+
+# Self-nomination rules: every batch gets 2 places for each job,
+# and one person can stand for only one job.
+BATCH_SLOT_LIMIT = 2
+BATCH_YEAR_RE = re.compile(r"\b(19[5-9]\d|20[0-2]\d)\b")
+
+def parse_batch(name):
+    m = BATCH_YEAR_RE.search(name or "")
+    return m.group(1) if m else None
+
+def person_key(name):
+    s = re.sub(r"\(.*?\)", " ", name or "")
+    s = BATCH_YEAR_RE.sub(" ", s)
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+def nomination_error(conn, race, name):
+    """Plain-language error, or None if this name may stand for this job."""
+    batch = parse_batch(name)
+    if not batch:
+        return "Please add the batch year with the name, e.g. Anita Rao (2004)."
+    if len(person_key(name)) < 2:
+        return "Please type the full name."
+    cmap = custom_map(conn)
+    same_batch = 0
+    for r in conn.execute("SELECT race, name FROM candidates").fetchall():
+        if person_key(r["name"]) == person_key(name) and r["race"] != race:
+            return (f"{norm(name)} is already standing for "
+                    f"{pretty(r['race'], cmap)['title']} — one person, one job.")
+        if r["race"] == race and parse_batch(r["name"]) == batch:
+            same_batch += 1
+    if same_batch >= BATCH_SLOT_LIMIT:
+        return (f"Batch {batch} already has 2 names for "
+                f"{pretty(race, cmap)['title']} — those places are full.")
+    return None
 
 def voting_open(conn):
     # Nominations-only by default; admin opens voting when ready.
@@ -358,6 +392,10 @@ def add_candidate():
             return jsonify({"error": "Voting has started, so new jobs cannot be added."}), 409
     except Exception:
         pass
+    err = nomination_error(conn, race, name)
+    if err:
+        conn.close()
+        return jsonify({"error": err}), 409
     try:
         cur = conn.execute("INSERT INTO candidates (race, name, created_at) VALUES (?,?,?)",
                            (race, name, datetime.utcnow().isoformat()))
@@ -374,7 +412,7 @@ def vote():
     data = request.get_json(force=True, silent=True) or {}
     voter = norm(data.get("voter"))
     if not voter or len(voter) < 2 or len(voter) > 60:
-        return jsonify({"error": "Enter your name to vote (2-60 chars)"}), 400
+        return jsonify({"error": "Please type your name"}), 400
 
     choices = dict(data.get("choices") or {})
     writeins = dict(data.get("writeins") or {})
@@ -431,6 +469,14 @@ def vote():
                 return jsonify({"error": f"Name for {pt(race)} must be 2-60 characters"}), 400
             if prior_votes > 0 and race not in required:
                 return jsonify({"error": "Voting has started, so new jobs cannot be added."}), 409
+            dup = conn.execute("SELECT id FROM candidates WHERE race=? AND name=? COLLATE NOCASE",
+                               (race, wname)).fetchone()
+            if dup:
+                resolved[race] = dup["id"]
+                continue
+            err = nomination_error(conn, race, wname)
+            if err:
+                return jsonify({"error": err}), 409
             try:
                 cur = conn.execute("INSERT INTO candidates (race,name,created_at) VALUES (?,?,?)",
                                    (race, wname, datetime.utcnow().isoformat()))
