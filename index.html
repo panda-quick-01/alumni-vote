@@ -160,7 +160,8 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 </div>
 
 <h2 class="sec-title">Step 3 — Our committee</h2>
-<p class="sec-sub">The names with the community's backing.</p>
+<p class="sec-sub">The names with the community's backing. One person per role.</p>
+<div class="card" id="commCard" style="display:none;margin-bottom:12px"><h2>Your 2027 committee</h2><ul class="names" id="commList"></ul><p class="sec-sub" style="margin:10px 0 0">Same support? Whoever stepped forward first leads. Exact tie? Our Chairman decides.</p></div>
 <div class="card">
 <div class="row"><select id="resOffice" onchange="renderRes()"><option value="">All roles</option></select><input id="resSearch" type="search" placeholder="Search name…" oninput="renderRes()"/></div>
 </div>
@@ -323,13 +324,23 @@ try{await api('/api/vote',{method:'POST',body:JSON.stringify({voter,choices,writ
 }
 // RESULTS
 function renderRes(){
+const anyVotes=(META.total_votes||0)>0;
+const comm=META.committee||{};
+const hasComm=anyVotes&&OFFICES.some(o=>comm[o.slug]);
+document.getElementById('commCard').style.display=hasComm?'block':'none';
+if(hasComm){
+document.getElementById('commList').innerHTML=OFFICES.map(o=>{
+const w=comm[o.slug];
+if(!w)return `<li><span>${esc(o.title)}</span><span class="bt">—</span></li>`;
+const note=w.how==='chairman decides'?'Chairman to decide':w.how==='tie — stepped forward first'?'Led: stepped forward first':w.how==='only volunteer'?'Only volunteer':w.votes+' supporter'+(w.votes===1?'':'s');
+return `<li><span><b>${esc(o.title)}</b><br/><span style="color:var(--mut);font-size:13px">${esc(w.name)}</span></span><span class="bt">${esc(note)}</span></li>`}).join('');
+}
 const selO=document.getElementById('resOffice');
 const cur=selO.value;
 selO.innerHTML='<option value="">All roles</option>'+OFFICES.map(o=>`<option value="${o.slug}">${esc(o.title)}</option>`).join('');
 selO.value=cur;
 const f=selO.value,q=(document.getElementById('resSearch').value||'').toLowerCase();
 const offices=OFFICES.filter(o=>!f||o.slug===f);
-const anyVotes=(META.total_votes||0)>0;
 document.getElementById('resGrid').innerHTML=offices.map(o=>{
 let arr=(RESULTS[o.slug]||[]).filter(r=>!q||r.name.toLowerCase().includes(q));
 const top=arr.slice(0,3),rest=arr.slice(3);

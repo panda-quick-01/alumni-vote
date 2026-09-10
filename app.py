@@ -25,6 +25,7 @@ PLAN = [
     {"phase": "2. Build", "when": "Jan – Jun 2027", "what": "Directory, school premises layout & permissions, budget, sponsors, batch coordinators, save-the-date + WhatsApp updates."},
     {"phase": "3. Execution", "when": "Jul – Oct 2027", "what": "Registrations, food, stay & travel help for outstation alumni, culture & sports program, mementos. Registration closes Oct 2027."},
     {"phase": "4. Meet + Audit", "when": "Nov – Dec 2027", "what": "Alumni Meet Nov 2027, felicitations, AGM, accounts + directory published."},
+    {"phase": "Deciding ties", "when": "If equal", "what": "Most supporters wins the role. Same support? Whoever stepped forward first leads. Exact tie? Our Chairman decides."},
 ]
 ELECTED_NOW = ["Convener", "Co-Convener", "Operations Convener", "Registration & Outreach Convener", "Finance Convener", "Logistics Convener", "Programmes Convener", "Comms & PR Convener"]
 COOPT_LATER = ["Registration", "Hospitality & Stay", "Transport", "Food & Catering", "Sponsorship", "Social Media / IT", "Batch Coordinators", "Volunteers", "Safety & Medical", "Stage & Tech", "Photography", "Auditor"]
@@ -330,19 +331,37 @@ def state():
     except Exception:
         total = 0
     results = {}
+    committee = {}
     for race in races:
         rows = conn.execute("""
-            SELECT c.id, c.name, COUNT(vc.vote_id) as votes
+            SELECT c.id, c.name, c.created_at, COUNT(vc.vote_id) as votes
             FROM candidates c LEFT JOIN vote_choices vc
               ON vc.candidate_id = c.id AND vc.race = ?
             WHERE c.race = ?
-            GROUP BY c.id ORDER BY votes DESC, name COLLATE NOCASE
+            GROUP BY c.id ORDER BY votes DESC, c.created_at ASC, name COLLATE NOCASE
         """, (race, race)).fetchall()
         rlist = []
         for r in rows:
             pct = round((r["votes"] / total * 100) if total else 0, 1)
-            rlist.append({"id": r["id"], "name": r["name"], "votes": r["votes"], "pct": pct})
+            rlist.append({"id": r["id"], "name": r["name"], "votes": r["votes"], "pct": pct,
+                          "since": r["created_at"]})
         results[race] = rlist
+        # One holder per role. Tie rules, applied in the open:
+        # 1. most supporters wins; 2. tie -> stepped forward first;
+        # 3. same timestamp -> Chairman decides.
+        if rlist and total > 0:
+            top = rlist[0]
+            tied = [x for x in rlist[1:] if x["votes"] == top["votes"]]
+            if len(rlist) == 1:
+                how = "only volunteer"
+            elif not tied:
+                how = "most supported"
+            else:
+                same_time = [x for x in tied if x["since"] == top["since"]]
+                how = "chairman decides" if same_time else "tie — stepped forward first"
+            committee[race] = {"id": top["id"], "name": top["name"], "votes": top["votes"],
+                               "tie": bool(tied), "how": how,
+                               "tied_with": [x["name"] for x in tied] if tied else []}
     try:
         recent = [dict(r) for r in conn.execute(f"SELECT voter, created_at FROM {vt} ORDER BY id DESC LIMIT 8")]
     except Exception:
@@ -360,6 +379,7 @@ def state():
         "coopt_later": COOPT_LATER,
         "offices_frozen": total > 0,
         "voting_open": is_open,
+        "committee": committee,
         "admin_enabled": bool(ADMIN_TOKEN),
         "offices": offices,
         "candidates": cands,
