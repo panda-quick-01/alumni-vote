@@ -21,7 +21,7 @@ CHAIRMAN = {"title": "Chairman", "held_by": "Principal or his appointee",
 
 # Public plan shown on the homepage so any visitor understands the road to Nov 2027.
 PLAN = [
-    {"phase": "1. Foundation", "when": "Sep – Dec 2026", "what": "Self-nomination: every batch gets 2 places for each job, one person one job. The job list gets fixed once voting starts."},
+    {"phase": "1. Foundation", "when": "Sep – Dec 2026", "what": "Volunteers step forward: every batch gets 2 places per role, one person one role. The role list gets fixed once endorsements open."},
     {"phase": "2. Build", "when": "Jan – Jun 2027", "what": "Directory, school premises layout & permissions, budget, sponsors, batch coordinators, save-the-date + WhatsApp updates."},
     {"phase": "3. Execution", "when": "Jul – Oct 2027", "what": "Registrations, food, stay & travel help for outstation alumni, culture & sports program, mementos. Registration closes Oct 2027."},
     {"phase": "4. Meet + Audit", "when": "Nov – Dec 2027", "what": "Alumni Meet Nov 2027, felicitations, AGM, accounts + directory published."},
