@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Alumni Meet — Office Bearers Election</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--acc:#22c55e;--acc2:#3b82f6;--mut:#94a3b8}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#0f172a,#111827);color:#f1f5f9;min-height:100vh}
+.wrap{max-width:1020px;margin:0 auto;padding:20px 16px 60px}
+header{text-align:center;padding:26px 12px 10px}
+header h1{margin:0;font-size:clamp(24px,5vw,40px)}header p{color:var(--mut);margin:8px 0 0}
+.badge{display:inline-block;background:#22c55e22;border:1px solid #22c55e55;color:#86efac;padding:4px 12px;border-radius:99px;font-size:13px;margin-bottom:12px}
+.grid{display:grid;gap:14px}@media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--card);border:1px solid #334155;border-radius:16px;padding:16px}
+.card h2{margin:0;font-size:18px}.card small{color:var(--mut)}
+.cand{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid #334155;border-radius:11px;margin:7px 0;cursor:pointer;transition:.15s;font-size:15px}
+.cand:hover{border-color:var(--acc)}.cand.sel{border-color:var(--acc);background:#22c55e14}
+.cand input{accent-color:var(--acc);width:17px;height:17px}
+.cand .nm{flex:1;font-weight:600}
+.bar{height:8px;background:#0f172a;border-radius:99px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.resrow{padding:9px 0;border-bottom:1px dashed #334155}.resrow:last-child{border:0}
+.votebox{background:var(--card);border:1px solid #334155;border-radius:16px;padding:18px;margin-top:16px;position:sticky;bottom:12px}
+input[type=text]{width:100%;padding:11px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;font-size:15px}
+.row{display:flex;gap:8px;margin-top:8px}.row input{flex:1}button{cursor:pointer;border:0;border-radius:10px;padding:11px 14px;font-weight:700;font-size:14px}
+.btn-add{background:#334155;color:#fff}.btn-vote{background:var(--acc);color:#052e16;width:100%;margin-top:12px;font-size:17px;padding:14px}
+.btn-vote:disabled{opacity:.5}.hint{font-size:13px;color:var(--mut);margin-top:8px}
+.tabs{display:flex;gap:8px;justify-content:center;margin:14px 0}.tabs button{background:#1e293b;color:#cbd5e1;border:1px solid #334155}.tabs button.on{background:#fff;color:#0f172a}
+.stat{display:flex;gap:10px;justify-content:center;margin:10px 0;flex-wrap:wrap}.stat div{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:8px 16px;text-align:center}.stat b{font-size:20px;display:block}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#fff;color:#111;padding:12px 18px;border-radius:12px;font-weight:600;display:none;max-width:92vw;z-index:9}
+footer{text-align:center;color:var(--mut);font-size:13px;margin-top:22px}a{color:#86efac}
+.progress{font-size:13px;color:var(--mut);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="badge">🗳️ Alumni Meet • live voting</div>
+<h1>Elect Your Office Bearers</h1>
+<p>7 posts needed to conduct a successful alumni meet. Pick one per office — or add a name if missing.</p>
+</header>
+<div class="stat">
+<div><b id="tVotes">0</b><span>Total votes</span></div>
+<div><b id="tCands">0</b><span>Nominations</span></div>
+<div><b id="tOff">7</b><span>Offices</span></div>
+</div>
+<div class="tabs">
+<button id="tabVote" class="on" onclick="show('vote')">Vote</button>
+<button id="tabRes" onclick="show('res')">Results</button>
+</div>
+<div id="paneVote">
+<div id="offGrid" class="grid"></div>
+<div class="votebox">
+<label><b>Your name (one full ballot per person)</b></label>
+<input id="voter" type="text" maxlength="60" placeholder="e.g. Jane Doe (Batch 1996)"/>
+<div id="prog" class="progress"></div>
+<button id="voteBtn" class="btn-vote" onclick="submitVote()">Cast full ballot</button>
+<div class="hint">Tip: use the write-in box under any office if your choice isn't listed — it gets added automatically. <a href="/api/export" target="_blank">Export JSON</a></div>
+</div>
+</div>
+<div id="paneRes" style="display:none">
+<div id="resGrid" class="grid"></div>
+<div class="card" style="margin-top:14px"><h2>Recent voters</h2><div id="recent" style="font-size:14px;color:#cbd5e1"></div></div>
+</div>
+<footer>SQLite on persistent volume • auto-refresh 5s • one vote per name</footer>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+let OFFICES=[], CANDS={}, sel={}, writeins={};
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3400)}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function show(w){document.getElementById('paneVote').style.display=w==='vote'?'block':'none';document.getElementById('paneRes').style.display=w==='res'?'block':'none';document.getElementById('tabVote').className=w==='vote'?'on':'';document.getElementById('tabRes').className=w==='res'?'on':'';if(w==='res')load();}
+async function api(p,o){const r=await fetch(p,{headers:{'Content-Type':'application/json'},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j}
+async function load(){
+try{
+const s=await api('/api/state');
+OFFICES=s.offices;CANDS=s.candidates;
+document.getElementById('tVotes').textContent=s.total_votes;
+document.getElementById('tCands').textContent=Object.values(s.candidates).reduce((a,b)=>a+b.length,0);
+document.getElementById('tOff').textContent=s.offices.length;
+renderVote();renderRes(s);
+}catch(e){}
+}
+function renderVote(){
+const g=document.getElementById('offGrid');
+g.innerHTML=OFFICES.map(o=>{
+const list=CANDS[o.slug]||[];
+return `<div class="card"><h2>${o.emoji} ${esc(o.title)}</h2><small>${esc(o.desc||'')}</small>
+<div>${list.length?list.map(c=>`<label class="cand ${sel[o.slug]===c.id?'sel':''}"><input type="radio" name="${o.slug}" ${sel[o.slug]===c.id?'checked':''} onchange="pick('${o.slug}',${c.id})"/><span class="nm">${esc(c.name)}</span></label>`).join(''):'<p style="color:#94a3b8">No nominations yet — add the first 👇</p>'}</div>
+<div class="row"><input id="add_${o.slug}" type="text" maxlength="60" placeholder="Add ${esc(o.title)} name…"/><button class="btn-add" onclick="addCand('${o.slug}')">Add</button></div>
+<div class="row"><input id="w_${o.slug}" oninput="wIn('${o.slug}',this.value)" value="${esc(writeins[o.slug]||'')}" type="text" maxlength="60" placeholder="Or write-in at vote time…"/></div>
+</div>`}).join('');
+// re-attach enter handlers
+OFFICES.forEach(o=>{const el=document.getElementById('add_'+o.slug);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')addCand(o.slug)})});
+const filled=OFFICES.filter(o=>sel[o.slug]||(writeins[o.slug]||'').trim()).length;
+document.getElementById('prog').textContent=`Ballot: ${filled}/${OFFICES.length} offices filled`;
+}
+function renderRes(s){
+document.getElementById('resGrid').innerHTML=OFFICES.map(o=>{
+const arr=s.results[o.slug]||[];
+return `<div class="card"><h2>${o.emoji} ${esc(o.title)}</h2>${arr.length?arr.map(r=>`<div class="resrow"><div style="display:flex;justify-content:space-between"><b>${esc(r.name)}</b><span>${r.votes} • ${r.pct}%</span></div><div class="bar"><i style="width:${r.pct}%"></i></div></div>`).join(''):'<p style="color:#94a3b8">No nominations yet.</p>'}</div>`}).join('');
+document.getElementById('recent').innerHTML=s.recent.length?s.recent.map(v=>`✅ ${esc(v.voter)} <span style="opacity:.6">• ${new Date(v.created_at+'Z').toLocaleString()}</span>`).join('<br>'):'No votes yet — be the first!';
+}
+function pick(race,id){sel[race]=id;const w=document.getElementById('w_'+race);if(w&&w.value.trim()){writeins[race]='';}renderVote();}
+function wIn(race,v){writeins[race]=v;if(v.trim())delete sel[race];const filled=OFFICES.filter(o=>sel[o.slug]||(writeins[o.slug]||'').trim()).length;document.getElementById('prog').textContent=`Ballot: ${filled}/${OFFICES.length} offices filled`;}
+async function addCand(race){
+const inp=document.getElementById('add_'+race);const name=(inp.value||'').trim();if(!name)return toast('Type a name first');
+try{const r=await api('/api/candidates',{method:'POST',body:JSON.stringify({race,name})});inp.value='';sel[race]=r.id;toast('Nominated '+name);load();}catch(e){toast(e.message)}
+}
+async function submitVote(){
+const voter=document.getElementById('voter').value.trim();
+if(!voter)return toast('Enter your name to vote');
+const choices={},wins={};
+OFFICES.forEach(o=>{if(sel[o.slug])choices[o.slug]=sel[o.slug];const w=(writeins[o.slug]||'').trim();if(w&&!sel[o.slug])wins[o.slug]=w;});
+const missing=OFFICES.filter(o=>!choices[o.slug]&&!wins[o.slug]);
+if(missing.length)return toast('Missing: '+missing.map(o=>o.title).join(', '));
+const btn=document.getElementById('voteBtn');btn.disabled=true;
+try{await api('/api/vote',{method:'POST',body:JSON.stringify({voter,choices,writeins:wins})});toast('Ballot counted! Thank you '+voter);sel={};writeins={};load();show('res');}catch(e){toast(e.message)}finally{btn.disabled=false}
+}
+document.getElementById('voter').addEventListener('keydown',e=>{if(e.key==='Enter')submitVote()});
+load();setInterval(load,5000);
+</script>
+</body></html>
