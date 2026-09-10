@@ -26,11 +26,13 @@ def slugify(s):
     s = re.sub(r"[^a-z0-9_]", "", s)
     return s[:40]
 
-def pretty(slug):
+def pretty(slug, custom=None):
     if slug in OFFICE_MAP:
         return OFFICE_MAP[slug]
+    if custom and slug in custom:
+        return custom[slug]
     title = slug.replace("_", " ").title()
-    return {"slug": slug, "title": title, "emoji": "📌", "desc": "Nominated office"}
+    return {"slug": slug, "title": title, "emoji": "📌", "desc": "Custom office"}
 
 def get_db():
     d = os.path.dirname(DB_PATH)
@@ -63,6 +65,13 @@ def init_db():
         race TEXT NOT NULL,
         candidate_id INTEGER NOT NULL REFERENCES candidates(id),
         UNIQUE(vote_id, race)
+    );
+    CREATE TABLE IF NOT EXISTS custom_offices (
+        slug TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        emoji TEXT NOT NULL DEFAULT '📌',
+        descr TEXT NOT NULL DEFAULT 'Custom office',
+        created_at TEXT NOT NULL
     );
     """)
     # Migrate legacy tables if present
@@ -97,15 +106,39 @@ def db_votes_table():
     conn.close()
     return "votes_new" if "votes_new" in names else "votes"
 
+def custom_map(conn):
+    try:
+        return {r["slug"]: {"slug": r["slug"], "title": r["title"], "emoji": r["emoji"] or "📌",
+                            "desc": r["descr"] or "Custom office"}
+                for r in conn.execute("SELECT slug, title, emoji, descr FROM custom_offices")}
+    except Exception:
+        return {}
+
+def get_offices(conn):
+    cmap = custom_map(conn)
+    offices = list(OFFICES)
+    seen = {o["slug"] for o in offices}
+    for r in conn.execute("SELECT slug, title, emoji, descr, created_at FROM custom_offices ORDER BY created_at"):
+        if r["slug"] not in seen:
+            offices.append({"slug": r["slug"], "title": r["title"], "emoji": r["emoji"] or "📌",
+                            "desc": r["descr"] or "Custom office"})
+            seen.add(r["slug"])
+    # orphan races (e.g. added via write-in with a brand-new slug, or legacy 'secretary')
+    try:
+        for r in conn.execute("SELECT DISTINCT race FROM candidates"):
+            if r["race"] not in seen:
+                offices.append(pretty(r["race"], cmap))
+                seen.add(r["race"])
+        for r in conn.execute("SELECT DISTINCT race FROM vote_choices"):
+            if r["race"] not in seen:
+                offices.append(pretty(r["race"], cmap))
+                seen.add(r["race"])
+    except Exception:
+        pass
+    return offices
+
 def all_races(conn):
-    races = [o["slug"] for o in OFFICES]
-    for r in conn.execute("SELECT DISTINCT race FROM candidates"):
-        if r["race"] not in races:
-            races.append(r["race"])
-    for r in conn.execute("SELECT DISTINCT race FROM vote_choices"):
-        if r["race"] not in races:
-            races.append(r["race"])
-    return races
+    return [o["slug"] for o in get_offices(conn)]
 
 def norm(s):
     return (s or "").strip()
@@ -117,15 +150,58 @@ def health():
 @app.get("/api/offices")
 def offices():
     conn = get_db()
-    races = all_races(conn)
+    offices = get_offices(conn)
     conn.close()
-    return jsonify([pretty(r) for r in races])
+    return jsonify(offices)
+
+@app.post("/api/offices")
+def create_office():
+    data = request.get_json(force=True, silent=True) or {}
+    title = norm(data.get("title"))
+    emoji = norm(data.get("emoji")) or "📌"
+    desc = norm(data.get("desc") or data.get("description")) or "Custom office"
+    first_nominee = norm(data.get("first_nominee") or data.get("firstNominee") or "")
+    if not title or len(title) < 2 or len(title) > 40:
+        return jsonify({"error": "Office title must be 2-40 characters"}), 400
+    slug = slugify(data.get("slug") or title)
+    if not slug or len(slug) < 2:
+        return jsonify({"error": "Could not make a valid office id from that title"}), 400
+    if slug in OFFICE_MAP:
+        return jsonify({"error": f"'{OFFICE_MAP[slug]['title']}' already exists"}), 409
+    if len(emoji) > 8:
+        emoji = emoji[:8]
+    if len(desc) > 120:
+        desc = desc[:120]
+    conn = get_db()
+    try:
+        conn.execute("INSERT INTO custom_offices (slug, title, emoji, descr, created_at) VALUES (?,?,?,?,?)",
+                     (slug, title, emoji, desc, datetime.utcnow().isoformat()))
+        cid = None
+        if first_nominee:
+            if len(first_nominee) < 2 or len(first_nominee) > 60:
+                conn.rollback(); conn.close()
+                return jsonify({"error": "First nominee must be 2-60 characters"}), 400
+            try:
+                cur = conn.execute("INSERT INTO candidates (race, name, created_at) VALUES (?,?,?)",
+                                   (slug, first_nominee, datetime.utcnow().isoformat()))
+                cid = cur.lastrowid
+            except sqlite3.IntegrityError:
+                pass
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({"error": "That office already exists"}), 409
+    conn.close()
+    return jsonify({"ok": True, "slug": slug, "title": title, "emoji": emoji,
+                    "desc": desc, "first_candidate_id": cid})
 
 @app.get("/api/state")
 def state():
     conn = get_db()
     vt = "votes_new"
-    races = all_races(conn)
+    offices = get_offices(conn)
+    cmap = custom_map(conn)
+    races = [o["slug"] for o in offices]
     cands = {}
     for race in races:
         cands[race] = [{"id": r["id"], "name": r["name"]}
@@ -154,7 +230,7 @@ def state():
         recent = []
     conn.close()
     return jsonify({
-        "offices": [pretty(r) for r in races],
+        "offices": offices,
         "candidates": cands,
         "results": results,
         "total_votes": total,
@@ -213,10 +289,18 @@ def vote():
     if norm(data.get("secretary_new")):
         writeins.setdefault("general_secretary", norm(data.get("secretary_new")))
 
-    # Required races = default offices (ignore purely custom for required check,
-    # but require every default office to be filled)
-    required = [o["slug"] for o in OFFICES]
+    # Required races = all current offices (default 7 + any custom added).
+    # Custom offices added later also become required for NEW ballots;
+    # earlier ballots simply show lower % for the new race.
     conn = get_db()
+    offices_now = get_offices(conn)
+    cmap_now = custom_map(conn)
+    required = [o["slug"] for o in offices_now]
+    def pt(slug):
+        for o in offices_now:
+            if o["slug"] == slug:
+                return o["title"]
+        return pretty(slug, cmap_now)["title"]
     try:
         resolved = {}
         # apply write-ins first (create candidate if needed)
@@ -226,7 +310,7 @@ def vote():
             if not wname:
                 continue
             if len(wname) < 2 or len(wname) > 60:
-                return jsonify({"error": f"Write-in for {pretty(race)['title']} must be 2-60 chars"}), 400
+                return jsonify({"error": f"Write-in for {pt(race)} must be 2-60 chars"}), 400
             try:
                 cur = conn.execute("INSERT INTO candidates (race,name,created_at) VALUES (?,?,?)",
                                    (race, wname, datetime.utcnow().isoformat()))
@@ -245,7 +329,7 @@ def vote():
                 continue
             resolved[race] = cid
 
-        missing = [pretty(r)["title"] for r in required if r not in resolved]
+        missing = [pt(r) for r in required if r not in resolved]
         if missing:
             return jsonify({"error": "Missing vote for: " + ", ".join(missing)}), 400
 
@@ -253,7 +337,7 @@ def vote():
         for race, cid in resolved.items():
             ok = conn.execute("SELECT id FROM candidates WHERE id=? AND race=?", (cid, race)).fetchone()
             if not ok:
-                return jsonify({"error": f"Invalid candidate for {pretty(race)['title']}"}), 400
+                return jsonify({"error": f"Invalid candidate for {pt(race)}"}), 400
 
         try:
             cur = conn.execute("INSERT INTO votes_new (voter, created_at) VALUES (?,?)",
@@ -273,6 +357,7 @@ def vote():
 @app.get("/api/export")
 def export_json():
     conn = get_db()
+    offices = get_offices(conn)
     cands = [dict(r) for r in conn.execute("SELECT * FROM candidates ORDER BY race, name")]
     try:
         votes = [dict(r) for r in conn.execute("SELECT id, voter, created_at FROM votes_new ORDER BY id")]
@@ -284,7 +369,7 @@ def export_json():
     except Exception:
         votes, choices = [], []
     conn.close()
-    return jsonify({"exported_at": datetime.utcnow().isoformat(), "candidates": cands,
+    return jsonify({"exported_at": datetime.utcnow().isoformat(), "offices": offices, "candidates": cands,
                     "votes": votes, "choices": choices})
 
 @app.post("/api/reset")
@@ -297,7 +382,7 @@ def reset():
     conn = get_db()
     if data.get("what") == "all":
         conn.execute("DELETE FROM vote_choices"); conn.execute("DELETE FROM votes_new")
-        conn.execute("DELETE FROM candidates")
+        conn.execute("DELETE FROM candidates"); conn.execute("DELETE FROM custom_offices")
     else:
         conn.execute("DELETE FROM vote_choices"); conn.execute("DELETE FROM votes_new")
     conn.commit(); conn.close()

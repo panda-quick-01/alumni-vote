@@ -37,7 +37,7 @@ footer{text-align:center;color:var(--mut);font-size:13px;margin-top:22px}a{color
 <header>
 <div class="badge">🗳️ Alumni Meet • live voting</div>
 <h1>Elect Your Office Bearers</h1>
-<p>7 posts needed to conduct a successful alumni meet. Pick one per office — or add a name if missing.</p>
+<p>7 core posts + any custom offices you add. Pick one per office — or add a name if missing.</p>
 </header>
 <div class="stat">
 <div><b id="tVotes">0</b><span>Total votes</span></div>
@@ -50,6 +50,11 @@ footer{text-align:center;color:var(--mut);font-size:13px;margin-top:22px}a{color
 </div>
 <div id="paneVote">
 <div id="offGrid" class="grid"></div>
+<div class="card" style="margin-top:14px;border-style:dashed">
+<h2>➕ Add a custom office</h2><small>Need e.g. Sports Secretary, PRO, Auditor? Create it here — it appears for everyone instantly.</small>
+<div class="row"><input id="newOffice" type="text" maxlength="40" placeholder="Office title, e.g. Sports Secretary"/></div>
+<div class="row"><input id="newOfficeNom" type="text" maxlength="60" placeholder="First nominee name (optional)"/><button class="btn-add" onclick="addOffice()">Create office</button></div>
+</div>
 <div class="votebox">
 <label><b>Your name (one full ballot per person)</b></label>
 <input id="voter" type="text" maxlength="60" placeholder="e.g. Jane Doe (Batch 1996)"/>
@@ -107,6 +112,11 @@ async function addCand(race){
 const inp=document.getElementById('add_'+race);const name=(inp.value||'').trim();if(!name)return toast('Type a name first');
 try{const r=await api('/api/candidates',{method:'POST',body:JSON.stringify({race,name})});inp.value='';sel[race]=r.id;toast('Nominated '+name);load();}catch(e){toast(e.message)}
 }
+async function addOffice(){
+const t=document.getElementById('newOffice');const n=document.getElementById('newOfficeNom');
+const title=(t.value||'').trim();if(!title)return toast('Type an office title first');
+try{const r=await api('/api/offices',{method:'POST',body:JSON.stringify({title,first_nominee:(n.value||'').trim()||undefined})});t.value='';n.value='';toast('Office created: '+r.title);load();}catch(e){toast(e.message)}
+}
 async function submitVote(){
 const voter=document.getElementById('voter').value.trim();
 if(!voter)return toast('Enter your name to vote');
@@ -118,6 +128,7 @@ const btn=document.getElementById('voteBtn');btn.disabled=true;
 try{await api('/api/vote',{method:'POST',body:JSON.stringify({voter,choices,writeins:wins})});toast('Ballot counted! Thank you '+voter);sel={};writeins={};load();show('res');}catch(e){toast(e.message)}finally{btn.disabled=false}
 }
 document.getElementById('voter').addEventListener('keydown',e=>{if(e.key==='Enter')submitVote()});
+['newOffice','newOfficeNom'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')addOffice()}));
 load();setInterval(load,5000);
 </script>
 </body></html>
