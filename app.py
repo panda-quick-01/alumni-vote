@@ -54,6 +54,10 @@ ADMIN_PATH = os.environ.get("ADMIN_PATH", "").strip().strip("/")
 ELECTION_YEAR = os.environ.get("ELECTION_YEAR", "2027")
 MEET_WHEN = os.environ.get("MEET_WHEN", "November 2027")
 TERM_LABEL = os.environ.get("TERM_LABEL", "2026–27")
+# Fraud reports: set CONTACT_NUMBER (e.g. +91 98XXX XXXXX) to show a call link
+# on the endorsement card ("Someone endorsed in your name? Call …").
+CONTACT_NUMBER = os.environ.get("CONTACT_NUMBER", "").strip()
+CONTACT_LABEL = os.environ.get("CONTACT_LABEL", "the committee").strip() or "the committee"
 
 # Chairman is ex-officio (Principal or his appointee) — never on the ballot.
 CHAIRMAN = {"title": "Chairman", "held_by": "Principal or his appointee",
@@ -423,6 +427,7 @@ def state():
         "voting_open": is_open,
         "committee": committee,
         "admin_enabled": bool(ADMIN_TOKEN),
+        "contact": {"number": CONTACT_NUMBER, "label": CONTACT_LABEL} if CONTACT_NUMBER else None,
         "offices": offices,
         "candidates": cands,
         "results": results,

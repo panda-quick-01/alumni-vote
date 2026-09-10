@@ -156,7 +156,8 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <input id="voter" type="text" maxlength="60" placeholder="Your full name"/>
 <div id="prog" class="progress"></div>
 <button id="voteBtn" class="btn-pri" onclick="submitVote()">Endorse</button>
-<p class="sec-sub" style="margin:10px 0 0">Tap one name for each role, then press the button. One person, one endorsement.</p></div>
+<p class="sec-sub" style="margin:10px 0 0">Tap one name for each role, then press the button. One person, one endorsement.</p>
+<div id="contactLine" class="hintline" style="display:none">Someone endorsed in your name? Call <a id="contactLink" class="wa-link" href="#">…</a> and we will remove it.</div></div>
 </div>
 
 <h2 class="sec-title">Step 3 — Our committee</h2>
@@ -199,7 +200,7 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <div style="margin-top:6px"><div class="meta">Other teams (formed in 2027)</div><div id="cooptList"></div></div>
 </details>
 
-<footer>Built with love for St Peter's · Alumni Meet Nov 2027 · <a class="wa-link" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">WhatsApp updates</a></footer>
+<footer>Built with ❤️ for St Peter's · Alumni Meet Nov 2027 · <a class="wa-link" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">WhatsApp updates</a></footer>
 </div>
 <div id="toast" class="toast"></div>
 <script>
@@ -272,6 +273,10 @@ function renderVote(){
 const open=!!META.voting_open;
 document.getElementById('voteClosed').style.display=open?'none':'block';
 document.getElementById('voteOpen').style.display=open?'block':'none';
+const cc=META.contact;
+if(cc&&cc.number){const cl=document.getElementById('contactLine');cl.style.display='block';
+const a=document.getElementById('contactLink');a.href='tel:'+cc.number.replace(/[\s-]/g,'');a.textContent=cc.number+(cc.label?' ('+cc.label+')':'');}
+else{document.getElementById('contactLine').style.display='none';}
 document.getElementById('voteSub').textContent=open?'Support one person for each of the 7 roles.':'Endorsements open after names are in. You will support one person per role.';
 if(!open)return;
 renderVoteShell();
