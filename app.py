@@ -2,9 +2,49 @@ from flask import Flask, request, jsonify, send_from_directory
 import sqlite3
 import os
 import re
+import time
+from collections import defaultdict
 from datetime import datetime
+from functools import wraps
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 32 * 1024  # small JSON APIs; rejects giant bodies
+
+@app.after_request
+def security_headers(resp):
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["X-Frame-Options"] = "DENY"
+    resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    resp.headers["Content-Security-Policy"] = (
+        "default-src 'self'; style-src 'self' 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+        "connect-src 'self'; frame-ancestors 'none'")
+    return resp
+
+# Light in-memory throttle (generous: many voters may share school wifi / one IP).
+_RL = defaultdict(list)
+
+def client_ip():
+    xff = request.headers.get("X-Forwarded-For", "")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.remote_addr or "?"
+
+def rate_limit(max_calls, per_seconds):
+    def deco(fn):
+        @wraps(fn)
+        def wrapper(*a, **k):
+            now = time.time()
+            key = (fn.__name__, client_ip())
+            hits = [t for t in _RL[key] if now - t < per_seconds]
+            if len(hits) >= max_calls:
+                return jsonify({"error": "Too many tries — please wait a minute and retry."}), 429
+            hits.append(now)
+            _RL[key] = hits
+            return fn(*a, **k)
+        return wrapper
+    return deco
 
 DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(__file__), "data", "election.db"))
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
@@ -244,6 +284,7 @@ def offices():
     return jsonify(offices)
 
 @app.post("/api/offices")
+@rate_limit(30, 60)
 def create_office():
     data = request.get_json(force=True, silent=True) or {}
     title = norm(data.get("title"))
@@ -316,6 +357,7 @@ def delete_office(slug):
     return jsonify({"ok": True})
 
 @app.get("/api/state")
+@rate_limit(600, 60)
 def state():
     conn = get_db()
     vt = "votes_new"
@@ -389,6 +431,7 @@ def state():
     })
 
 @app.post("/api/candidates")
+@rate_limit(120, 60)
 def add_candidate():
     data = request.get_json(force=True, silent=True) or {}
     race = slugify(data.get("race"))
@@ -428,6 +471,7 @@ def add_candidate():
     return jsonify({"ok": True, "id": cid, "race": race, "name": name})
 
 @app.post("/api/vote")
+@rate_limit(60, 60)
 def vote():
     data = request.get_json(force=True, silent=True) or {}
     voter = norm(data.get("voter"))
@@ -541,6 +585,7 @@ def vote():
     return jsonify({"ok": True})
 
 @app.get("/api/export")
+@rate_limit(30, 60)
 def export_json():
     if not admin_ok(admin_token_from_request()):
         return jsonify({"error": "Admin only"}), 403
@@ -548,6 +593,7 @@ def export_json():
 
 
 @app.post("/api/export")
+@rate_limit(30, 60)
 def export_json_post():
     # Same data, token via JSON body (avoids putting it in URL logs).
     if not admin_ok(admin_token_from_request()):
@@ -575,6 +621,7 @@ def _export_data():
             "votes": votes, "choices": choices}
 
 @app.post("/api/reset")
+@rate_limit(30, 60)
 def reset():
     if not ADMIN_TOKEN:
         return jsonify({"error": "Reset disabled (set ADMIN_TOKEN to enable)"}), 403
@@ -591,6 +638,7 @@ def reset():
     return jsonify({"ok": True})
 
 @app.post("/api/admin/voting")
+@rate_limit(30, 60)
 def admin_voting():
     if not ADMIN_TOKEN:
         return jsonify({"error": "Admin disabled (set ADMIN_TOKEN to enable)"}), 403
@@ -604,6 +652,55 @@ def admin_voting():
     set_voting(conn, want)
     conn.close()
     return jsonify({"ok": True, "voting_open": want})
+
+@app.post("/api/admin/remove-support")
+@rate_limit(30, 60)
+def admin_remove_support():
+    # Delete one person's endorsement (their picked names stay listed).
+    if not ADMIN_TOKEN:
+        return jsonify({"error": "Admin disabled (set ADMIN_TOKEN to enable)"}), 403
+    data = request.get_json(force=True, silent=True) or {}
+    if not admin_ok(data.get("token")):
+        return jsonify({"error": "Bad token"}), 403
+    voter = norm(data.get("voter"))
+    if not voter:
+        return jsonify({"error": "Please type the name"}), 400
+    conn = get_db()
+    row = conn.execute("SELECT id, voter FROM votes_new WHERE voter=? COLLATE NOCASE",
+                       (voter,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": f"No endorsement found from '{voter}'"}), 404
+    conn.execute("DELETE FROM votes_new WHERE id=?", (row["id"],))
+    conn.commit(); conn.close()
+    return jsonify({"ok": True, "removed": row["voter"]})
+
+@app.post("/api/admin/remove-name")
+@rate_limit(30, 60)
+def admin_remove_name():
+    # Delete one volunteered name (only if nobody has picked it yet).
+    if not ADMIN_TOKEN:
+        return jsonify({"error": "Admin disabled (set ADMIN_TOKEN to enable)"}), 403
+    data = request.get_json(force=True, silent=True) or {}
+    if not admin_ok(data.get("token")):
+        return jsonify({"error": "Bad token"}), 403
+    try:
+        cid = int(data.get("id"))
+    except Exception:
+        return jsonify({"error": "Please give a valid name id (see downloaded data)"}), 400
+    conn = get_db()
+    row = conn.execute("SELECT id, race, name FROM candidates WHERE id=?", (cid,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "Name not found"}), 404
+    used = conn.execute("SELECT COUNT(*) c FROM vote_choices WHERE candidate_id=?",
+                        (cid,)).fetchone()["c"]
+    if used:
+        conn.close()
+        return jsonify({"error": f"'{row['name']}' already has support — remove those endorsements first"}), 409
+    conn.execute("DELETE FROM candidates WHERE id=?", (cid,))
+    conn.commit(); conn.close()
+    return jsonify({"ok": True, "removed": row["name"]})
 
 @app.get("/")
 def index():

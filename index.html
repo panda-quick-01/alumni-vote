@@ -179,8 +179,12 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 </div>
 <div id="adminTools" style="display:none">
 <div class="note ok" id="adminStatus"></div>
-<div class="row"><button class="btn-sec" id="voteToggle" onclick="adminToggleVoting()">Open voting</button></div>
+<div class="row"><button class="btn-sec" id="voteToggle" onclick="adminToggleVoting()">Open endorsements</button></div>
 <div class="row"><button class="btn-sec" onclick="adminExport()">Download all data</button></div>
+<div class="row"><input id="rmVoter" type="text" maxlength="60" placeholder="Name that endorsed"/></div>
+<div class="row"><button class="btn-dim" onclick="adminRemoveSupport()">Remove that endorsement</button></div>
+<div class="row"><input id="rmName" type="number" inputmode="numeric" placeholder="Name id (see download)"/></div>
+<div class="row"><button class="btn-dim" onclick="adminRemoveName()">Remove that volunteered name</button></div>
 <div class="row"><button class="btn-dim" onclick="adminReset('votes')">Delete all endorsements (keep names)</button></div>
 <div class="row"><button class="btn-dim" onclick="adminReset('all')">Delete everything</button></div>
 <div class="row"><button class="btn-dim" onclick="adminLock()">Lock</button></div>
@@ -395,6 +399,18 @@ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=
 setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 toast('Downloaded');
 }catch(e){toast(e.message);if(/password|admin/i.test(e.message))adminLock();}
+}
+async function adminRemoveSupport(){
+const v=(document.getElementById('rmVoter').value||'').trim();
+if(!v)return toast('Please type the name first');
+if(!confirm(`Remove the endorsement from '${v}'?`))return;
+try{const r=await api('/api/admin/remove-support',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,voter:v})});document.getElementById('rmVoter').value='';toast('Removed endorsement from '+r.removed);load();}catch(e){toast(e.message);}
+}
+async function adminRemoveName(){
+const v=(document.getElementById('rmName').value||'').trim();
+if(!v)return toast('Please type the name id first');
+if(!confirm(`Remove volunteered name #${v}?`))return;
+try{const r=await api('/api/admin/remove-name',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,id:v})});document.getElementById('rmName').value='';toast('Removed '+r.removed);load();}catch(e){toast(e.message);}
 }
 async function adminReset(what){
 if(!confirm(what==='all'?'Delete EVERYTHING (all names and votes)? This cannot be undone.':'Delete all endorsements? The names will stay.'))return;
