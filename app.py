@@ -8,16 +8,33 @@ app = Flask(__name__)
 
 DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(__file__), "data", "election.db"))
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
+ELECTION_YEAR = os.environ.get("ELECTION_YEAR", "2027")
+MEET_WHEN = os.environ.get("MEET_WHEN", "November 2027")
+TERM_LABEL = os.environ.get("TERM_LABEL", "2026–27")
 
-# All office bearers required to conduct a successful alumni meet
+# Chairman is ex-officio (Principal or his appointee) — never on the ballot.
+CHAIRMAN = {"title": "Chairman", "held_by": "Principal or his appointee",
+            "desc": "Ex-officio chair. Not elected here."}
+
+# Public plan shown on the homepage so any visitor understands the road to Nov 2027.
+PLAN = [
+    {"phase": "1. Foundation", "when": "Sep – Dec 2026", "what": "Nominate + elect the Convener + Co-Convener crew under the Chairman. Role list frozen once first ballot is cast."},
+    {"phase": "2. Build", "when": "Jan – Jun 2027", "what": "Directory, venue booking, budget, sponsors, batch coordinators, save-the-date + website/WhatsApp."},
+    {"phase": "3. Execution", "when": "Jul – Oct 2027", "what": "Registrations, stay/transport/food, culture & sports program, mementos. Registration closes Oct 2027."},
+    {"phase": "4. Meet + Audit", "when": "Nov – Dec 2027", "what": "Alumni Meet Nov 2027, felicitations, AGM, accounts + directory published."},
+]
+ELECTED_NOW = ["Convener", "Co-Convener", "Operations Convener", "Registration & Outreach Convener", "Finance Convener", "Logistics Convener", "Programmes Convener", "Comms & PR Convener"]
+COOPT_LATER = ["Registration", "Hospitality & Stay", "Transport", "Food & Catering", "Sponsorship", "Social Media / IT", "Batch Coordinators", "Volunteers", "Safety & Medical", "Stage & Tech", "Photography", "Auditor"]
+
+# Convener model. Chairman stays ex-officio (see CHAIRMAN). Slugs kept stable so existing ballots stay valid.
 OFFICES = [
-    {"slug": "president",            "title": "President",             "emoji": "👑", "desc": "Heads the association, chairs the meet"},
-    {"slug": "vice_president",       "title": "Vice President",        "emoji": "🤝", "desc": "Supports president, acts in absence"},
-    {"slug": "general_secretary",    "title": "General Secretary",     "emoji": "📝", "desc": "Convenes meet, minutes & coordination"},
-    {"slug": "joint_secretary",      "title": "Joint Secretary",       "emoji": "📋", "desc": "Assists secretary, registrations"},
-    {"slug": "treasurer",            "title": "Treasurer",             "emoji": "💰", "desc": "Budget, contributions & accounts"},
-    {"slug": "organizing_secretary", "title": "Organising Secretary",  "emoji": "🎯", "desc": "Venue, logistics & volunteers"},
-    {"slug": "cultural_secretary",   "title": "Cultural Secretary",    "emoji": "🎭", "desc": "Stage, entertainment & felicitations"},
+    {"slug": "president",            "title": "Convener",                          "emoji": "", "desc": "Convenes the committee, owns delivery"},
+    {"slug": "vice_president",       "title": "Co-Convener",                       "emoji": "", "desc": "Supports convener, acts in absence"},
+    {"slug": "general_secretary",    "title": "Operations Convener",               "emoji": "", "desc": "Cadence, minutes & coordination"},
+    {"slug": "joint_secretary",      "title": "Registration & Outreach Convener",  "emoji": "", "desc": "Batches, registrations & onboarding"},
+    {"slug": "treasurer",            "title": "Finance Convener",                  "emoji": "", "desc": "Budget, contributions & accounts"},
+    {"slug": "organizing_secretary", "title": "Logistics Convener",                "emoji": "", "desc": "Venue, stay, transport & volunteers"},
+    {"slug": "cultural_secretary",   "title": "Programmes Convener",               "emoji": "", "desc": "Stage, sports & felicitations"},
 ]
 OFFICE_MAP = {o["slug"]: o for o in OFFICES}
 
@@ -32,7 +49,7 @@ def pretty(slug, custom=None):
     if custom and slug in custom:
         return custom[slug]
     title = slug.replace("_", " ").title()
-    return {"slug": slug, "title": title, "emoji": "📌", "desc": "Custom office"}
+    return {"slug": slug, "title": title, "emoji": "", "desc": "Custom role"}
 
 def get_db():
     d = os.path.dirname(DB_PATH)
@@ -108,8 +125,8 @@ def db_votes_table():
 
 def custom_map(conn):
     try:
-        return {r["slug"]: {"slug": r["slug"], "title": r["title"], "emoji": r["emoji"] or "📌",
-                            "desc": r["descr"] or "Custom office"}
+        return {r["slug"]: {"slug": r["slug"], "title": r["title"], "emoji": r["emoji"] or "",
+                            "desc": r["descr"] or "Custom role"}
                 for r in conn.execute("SELECT slug, title, emoji, descr FROM custom_offices")}
     except Exception:
         return {}
@@ -120,8 +137,8 @@ def get_offices(conn):
     seen = {o["slug"] for o in offices}
     for r in conn.execute("SELECT slug, title, emoji, descr, created_at FROM custom_offices ORDER BY created_at"):
         if r["slug"] not in seen:
-            offices.append({"slug": r["slug"], "title": r["title"], "emoji": r["emoji"] or "📌",
-                            "desc": r["descr"] or "Custom office"})
+            offices.append({"slug": r["slug"], "title": r["title"], "emoji": r["emoji"] or "",
+                            "desc": r["descr"] or "Custom role"})
             seen.add(r["slug"])
     # orphan races (e.g. added via write-in with a brand-new slug, or legacy 'secretary')
     try:
@@ -143,6 +160,22 @@ def all_races(conn):
 def norm(s):
     return (s or "").strip()
 
+def admin_ok(provided):
+    # Admin tools (export/reset) need the token when one is configured.
+    if not ADMIN_TOKEN:
+        return True
+    return bool(provided) and provided == ADMIN_TOKEN
+
+def admin_token_from_request(data=None):
+    tok = request.args.get("token") or request.headers.get("X-Admin-Token")
+    if tok:
+        return tok
+    try:
+        d = data if data is not None else request.get_json(force=True, silent=True) or {}
+    except Exception:
+        d = {}
+    return (d.get("token") if isinstance(d, dict) else None)
+
 @app.get("/health")
 def health():
     return {"ok": True}
@@ -158,14 +191,14 @@ def offices():
 def create_office():
     data = request.get_json(force=True, silent=True) or {}
     title = norm(data.get("title"))
-    emoji = norm(data.get("emoji")) or "📌"
-    desc = norm(data.get("desc") or data.get("description")) or "Custom office"
+    emoji = norm(data.get("emoji")) or ""
+    desc = norm(data.get("desc") or data.get("description")) or "Custom role"
     first_nominee = norm(data.get("first_nominee") or data.get("firstNominee") or "")
     if not title or len(title) < 2 or len(title) > 40:
-        return jsonify({"error": "Office title must be 2-40 characters"}), 400
+        return jsonify({"error": "Role title must be 2-40 characters"}), 400
     slug = slugify(data.get("slug") or title)
     if not slug or len(slug) < 2:
-        return jsonify({"error": "Could not make a valid office id from that title"}), 400
+        return jsonify({"error": "Could not make a valid role id from that title"}), 400
     if slug in OFFICE_MAP:
         return jsonify({"error": f"'{OFFICE_MAP[slug]['title']}' already exists"}), 409
     if len(emoji) > 8:
@@ -173,6 +206,15 @@ def create_office():
     if len(desc) > 120:
         desc = desc[:120]
     conn = get_db()
+    # Fairness freeze: adding an office after ballots are cast would make
+    # old ballots incomplete. Block it once voting has started.
+    try:
+        nvotes = conn.execute("SELECT COUNT(*) c FROM votes_new").fetchone()["c"]
+    except Exception:
+        nvotes = 0
+    if nvotes > 0:
+        conn.close()
+        return jsonify({"error": "Roles frozen — votes already cast. New roles need a fresh election/reset."}), 409
     try:
         conn.execute("INSERT INTO custom_offices (slug, title, emoji, descr, created_at) VALUES (?,?,?,?,?)",
                      (slug, title, emoji, desc, datetime.utcnow().isoformat()))
@@ -190,7 +232,7 @@ def create_office():
         conn.commit()
     except sqlite3.IntegrityError:
         conn.close()
-        return jsonify({"error": "That office already exists"}), 409
+        return jsonify({"error": "That role already exists"}), 409
     conn.close()
     return jsonify({"ok": True, "slug": slug, "title": title, "emoji": emoji,
                     "desc": desc, "first_candidate_id": cid})
@@ -199,7 +241,7 @@ def create_office():
 def delete_office(slug):
     slug = slugify(slug)
     if slug in OFFICE_MAP:
-        return jsonify({"error": "Core offices cannot be deleted"}), 400
+        return jsonify({"error": "Core roles cannot be deleted"}), 400
     conn = get_db()
     row = conn.execute("SELECT slug FROM custom_offices WHERE slug=?", (slug,)).fetchone()
     if not row:
@@ -207,11 +249,11 @@ def delete_office(slug):
         has_c = conn.execute("SELECT 1 FROM candidates WHERE race=? LIMIT 1", (slug,)).fetchone()
         if not has_c:
             conn.close()
-            return jsonify({"error": "Office not found"}), 404
+            return jsonify({"error": "Role not found"}), 404
     used = conn.execute("SELECT COUNT(*) c FROM vote_choices WHERE race=?", (slug,)).fetchone()["c"]
     if used:
         conn.close()
-        return jsonify({"error": "Cannot delete — votes already cast for this office"}), 409
+        return jsonify({"error": "Cannot delete — votes already cast for this role"}), 409
     conn.execute("DELETE FROM candidates WHERE race=?", (slug,))
     conn.execute("DELETE FROM custom_offices WHERE slug=?", (slug,))
     conn.commit(); conn.close()
@@ -252,6 +294,16 @@ def state():
         recent = []
     conn.close()
     return jsonify({
+        "election": f"Alumni Meet {ELECTION_YEAR}",
+        "year": ELECTION_YEAR,
+        "meet_when": MEET_WHEN,
+        "term": TERM_LABEL,
+        "chairman": CHAIRMAN,
+        "plan": PLAN,
+        "elected_now": ELECTED_NOW,
+        "coopt_later": COOPT_LATER,
+        "offices_frozen": total > 0,
+        "admin_enabled": bool(ADMIN_TOKEN),
         "offices": offices,
         "candidates": cands,
         "results": results,
@@ -265,10 +317,24 @@ def add_candidate():
     race = slugify(data.get("race"))
     name = norm(data.get("name"))
     if not race:
-        return jsonify({"error": "Office is required"}), 400
+        return jsonify({"error": "Role is required"}), 400
     if not name or len(name) < 2 or len(name) > 60:
         return jsonify({"error": "Name must be 2-60 characters"}), 400
     conn = get_db()
+    # New race after voting started would orphan old ballots — block it.
+    # Adding names to an existing office is still allowed (nominations).
+    try:
+        existing = {o["slug"] for o in get_offices(conn)}
+        try:
+            nv = conn.execute("SELECT COUNT(*) c FROM votes_new").fetchone()["c"]
+        except Exception:
+            nv = 0
+        if nv > 0 and race not in existing:
+            # allow legacy 'secretary' alias etc. only if already known
+            conn.close()
+            return jsonify({"error": "Roles frozen — votes already cast. Cannot create a new role via nomination."}), 409
+    except Exception:
+        pass
     try:
         cur = conn.execute("INSERT INTO candidates (race, name, created_at) VALUES (?,?,?)",
                            (race, name, datetime.utcnow().isoformat()))
@@ -311,9 +377,8 @@ def vote():
     if norm(data.get("secretary_new")):
         writeins.setdefault("general_secretary", norm(data.get("secretary_new")))
 
-    # Required races = all current offices (default 7 + any custom added).
-    # Custom offices added later also become required for NEW ballots;
-    # earlier ballots simply show lower % for the new race.
+    # Required races = all current offices. Offices are frozen once the
+    # first ballot is cast (see POST /api/offices), so all ballots stay complete.
     conn = get_db()
     offices_now = get_offices(conn)
     cmap_now = custom_map(conn)
@@ -378,6 +443,20 @@ def vote():
 
 @app.get("/api/export")
 def export_json():
+    if not admin_ok(admin_token_from_request()):
+        return jsonify({"error": "Admin only"}), 403
+    return jsonify(_export_data())
+
+
+@app.post("/api/export")
+def export_json_post():
+    # Same data, token via JSON body (avoids putting it in URL logs).
+    if not admin_ok(admin_token_from_request()):
+        return jsonify({"error": "Admin only"}), 403
+    return jsonify(_export_data())
+
+
+def _export_data():
     conn = get_db()
     offices = get_offices(conn)
     cands = [dict(r) for r in conn.execute("SELECT * FROM candidates ORDER BY race, name")]
@@ -391,8 +470,10 @@ def export_json():
     except Exception:
         votes, choices = [], []
     conn.close()
-    return jsonify({"exported_at": datetime.utcnow().isoformat(), "offices": offices, "candidates": cands,
-                    "votes": votes, "choices": choices})
+    return {"exported_at": datetime.utcnow().isoformat(), "election": f"Alumni Meet {ELECTION_YEAR}",
+            "year": ELECTION_YEAR, "meet_when": MEET_WHEN, "term": TERM_LABEL,
+            "plan": PLAN, "offices": offices, "candidates": cands,
+            "votes": votes, "choices": choices}
 
 @app.post("/api/reset")
 def reset():
