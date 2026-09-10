@@ -8,6 +8,9 @@ app = Flask(__name__)
 
 DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(__file__), "data", "election.db"))
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
+# Secret admin URL path, e.g. ADMIN_PATH=committee-9f3a2c -> site.com/committee-9f3a2c
+# No Admin tab is shown publicly; only this path reveals it.
+ADMIN_PATH = os.environ.get("ADMIN_PATH", "").strip().strip("/")
 ELECTION_YEAR = os.environ.get("ELECTION_YEAR", "2027")
 MEET_WHEN = os.environ.get("MEET_WHEN", "November 2027")
 TERM_LABEL = os.environ.get("TERM_LABEL", "2026–27")
@@ -532,6 +535,14 @@ def admin_voting():
 @app.get("/")
 def index():
     return send_from_directory(os.path.dirname(__file__), "index.html")
+
+
+@app.get("/<slug>")
+def admin_route(slug):
+    # Secret admin entry: only the exact ADMIN_PATH serves the app; all else 404.
+    if ADMIN_PATH and slug == ADMIN_PATH:
+        return send_from_directory(os.path.dirname(__file__), "index.html")
+    return jsonify({"error": "Not found"}), 404
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "3000"))

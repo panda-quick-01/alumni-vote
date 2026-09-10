@@ -107,12 +107,11 @@ details summary{cursor:pointer;color:#fff;padding:6px 0}
 <div><b>760</b><span>Pool ~</span></div>
 </div>
 
-<div class="tabs">
+<div class="tabs" id="tabs">
 <button id="tabPlan" class="on" onclick="show('plan')">Plan</button>
 <button id="tabNominate" onclick="show('nominate')">Nominate</button>
 <button id="tabVote" onclick="show('vote')">Vote</button>
 <button id="tabRes" onclick="show('res')">Results</button>
-<button id="tabAdmin" onclick="show('admin')">Admin</button>
 </div>
 
 <div id="panePlan">
@@ -184,7 +183,7 @@ details summary{cursor:pointer;color:#fff;padding:6px 0}
 </div>
 </div>
 
-<footer>Alumni Meet Nov 2027 · Term 2026–27 · <a class="wa-link" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">WhatsApp updates</a></footer>
+<footer>Built with love for St Peter's · Alumni Meet Nov 2027 · <a class="wa-link" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">WhatsApp updates</a></footer>
 </div>
 <div id="toast" class="toast"></div>
 <script>
@@ -194,7 +193,10 @@ let lastSig='';
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3400)}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function batchOf(n){const m=(n||'').match(/\b(19|20)\d{2}\b/);return m?m[0]:''}
-function show(w){['plan','nominate','vote','res','admin'].forEach(k=>{document.getElementById('pane'+k[0].toUpperCase()+k.slice(1)).style.display=w===k?'block':'none';document.getElementById('tab'+k[0].toUpperCase()+k.slice(1)).className=w===k?'on':'';});if(w==='res')load(true);if(w==='vote')renderVoteShell();if(w==='admin')renderAdmin();window.scrollTo({top:0});}
+function show(w){['plan','nominate','vote','res','admin'].forEach(k=>{const p=document.getElementById('pane'+k[0].toUpperCase()+k.slice(1));if(p)p.style.display=w===k?'block':'none';const t=document.getElementById('tab'+k[0].toUpperCase()+k.slice(1));if(t)t.className=w===k?'on':'';});if(w==='res')load(true);if(w==='vote')renderVoteShell();if(w==='admin')renderAdmin();window.scrollTo({top:0});}
+// Admin is reachable only via the secret ADMIN_PATH URL (never linked publicly).
+const IS_ADMIN_ROUTE=window.location.pathname.replace(/\/+$/,'')!=='';
+if(IS_ADMIN_ROUTE){const b=document.createElement('button');b.id='tabAdmin';b.textContent='Admin';b.onclick=()=>show('admin');document.getElementById('tabs').appendChild(b);}
 async function api(p,o){const r=await fetch(p,{headers:{'Content-Type':'application/json'},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j}
 function sigOf(s){try{return JSON.stringify([s.offices.map(o=>o.slug),Object.entries(s.candidates).map(([k,v])=>[k,v.length])])}catch(e){return ''}}
 function isTypingIn(paneId){const a=document.activeElement;return !!(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT')&&document.getElementById(paneId)&&document.getElementById(paneId).contains(a));}
@@ -367,5 +369,6 @@ document.getElementById('voter').addEventListener('keydown',e=>{if(e.key==='Ente
 document.getElementById('voteWritein').addEventListener('input',e=>{const o=curOffice();if(!o)return;if(e.target.value.trim()&&sel[o.slug])delete sel[o.slug];});
 ['newOffice','newOfficeNom'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')addOffice()}));
 load();setInterval(()=>load(false),8000);
+if(IS_ADMIN_ROUTE)show('admin');
 </script>
 </body></html>
