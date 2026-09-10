@@ -227,12 +227,12 @@ def all_races(conn):
 def norm(s):
     return (s or "").strip()
 
-# Self-nomination rules: batches 1996–2021; every batch gets 2 places per role;
+# Self-nomination rules: batches 2008–2021; every batch gets 2 places per role;
 # one person stands for only one role. Batch of 2021 is excused to focus on studies.
 BATCH_MIN, BATCH_MAX = 1996, 2021
 BATCH_STUDY_CUTOFF = 2020  # volunteers must be this batch or earlier
 BATCH_SLOT_LIMIT = 2
-BATCH_YEAR_RE = re.compile(r"\b(199[6-9]|200\d|202[01])\b")
+BATCH_YEAR_RE = re.compile(r"\b(200[89]|201\d|202[01])\b")
 ANY_YEAR_RE = re.compile(r"\b(19\d\d|20\d\d)\b")
 
 def parse_batch(name):
@@ -255,7 +255,7 @@ def nomination_error(conn, race, name):
     batch = parse_batch(name)
     if not batch:
         if ANY_YEAR_RE.search(name or ""):
-            return ("Sorry, this process covers batches 1996 to 2021. "
+            return ("Sorry, this process covers batches 2008 to 2021. "
                     "Please check the batch year.")
         return "Please add the batch year with the name, e.g. Anita Rao (2004)."
     if int(batch) > BATCH_STUDY_CUTOFF:

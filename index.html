@@ -121,7 +121,7 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <label for="standName">Your full name</label>
 <input id="standName" type="text" maxlength="60" placeholder="e.g. Anita Rao" autocomplete="off"/>
 <label for="standBatch">Your batch year</label>
-<input id="standBatch" type="number" inputmode="numeric" min="1996" max="2021" placeholder="e.g. 2004"/>
+<input id="standBatch" type="number" inputmode="numeric" min="2008" max="2021" placeholder="e.g. 2004"/>
 <label for="standPhone">Your mobile number</label>
 <input id="standPhone" type="tel" inputmode="numeric" maxlength="13" placeholder="10-digit mobile" autocomplete="off"/>
 <label for="standJob">Which role?</label>
@@ -131,7 +131,7 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <ul class="rules">
 <li>Every batch gets <b>2 places</b> for each role.</li>
 <li>One person, one role.</li>
-<li>Batches 1996 to 2021. Batch of 2021 — please focus on studies; you can still endorse.</li>
+<li>Batches 2008 to 2021. Batch of 2021 — please focus on studies; you can still endorse.</li>
 <li>The role list gets fixed once endorsements open.</li>
 </ul>
 </div>
@@ -212,8 +212,8 @@ let sel={},writeins={},voteIdx=0,voteLimit=30,lastVoteSlug='';
 const IS_ADMIN_ROUTE=window.location.pathname.replace(/\/+$/,'')!=='';
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3600)}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function batchOf(n){const m=(n||'').match(/\b(199[6-9]|200\d|202[01])\b/);return m?m[0]:''}
-function personOf(n){return (n||'').replace(/\(.*?\)/g,' ').replace(/\b(199[6-9]|200\d|202[01])\b/g,' ').replace(/\s+/g,' ').trim().toLowerCase()}
+function batchOf(n){const m=(n||'').match(/\b(200[89]|201\d|202[01])\b/);return m?m[0]:''}
+function personOf(n){return (n||'').replace(/\(.*?\)/g,' ').replace(/\b(200[89]|201\d|202[01])\b/g,' ').replace(/\s+/g,' ').trim().toLowerCase()}
 async function api(p,o){const r=await fetch(p,{headers:{'Content-Type':'application/json'},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j}
 async function load(){
 try{
@@ -240,7 +240,7 @@ const j=document.getElementById('standJob').value;
 const nm=(document.getElementById('standName').value||'').trim();
 const h=document.getElementById('slotHint');
 const o=OFFICES.find(x=>x.slug===j);if(!o){h.textContent='';return;}
-if(!/^(199[6-9]|200\d|202[01])$/.test(b)){h.className='hintline';h.textContent=`${o.title}: every batch gets 2 places.`;return;}
+if(!/^(200[89]|201\d|202[01])$/.test(b)){h.className='hintline';h.textContent=`${o.title}: every batch gets 2 places.`;return;}
 const taken=(CANDS[j]||[]).filter(c=>batchOf(c.name)===b).length;
 const mine=nm&&personOf(nm).length>1?(OFFICES.filter(x=>x.slug!==j).find(x=>(CANDS[x.slug]||[]).some(c=>personOf(c.name)===personOf(nm)&&personOf(nm)))):null;
 if(taken>=2){h.className='hintline full';h.textContent=`Batch ${b} · ${o.title}: full (2 of 2 taken). Try another job.`;}
@@ -254,7 +254,7 @@ const b=(document.getElementById('standBatch').value||'').trim();
 const ph=(document.getElementById('standPhone').value||'').replace(/\D/g,'');
 const j=document.getElementById('standJob').value;
 if(nm.length<2)return toast('Please type your full name');
-if(!/^(199[6-9]|200\d|202[01])$/.test(b))return toast('Please type your batch year (1996–2021)');
+if(!/^(200[89]|201\d|202[01])$/.test(b))return toast('Please type your batch year (2008–2021)');
 if(!/^(91\d{10}|\d{10})$/.test(ph))return toast('Please type your 10-digit mobile number');
 if(!j)return toast('Please pick a role');
 const btn=document.getElementById('standBtn');btn.disabled=true;
