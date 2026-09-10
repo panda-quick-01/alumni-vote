@@ -150,7 +150,7 @@ details summary{cursor:pointer;color:#fff;padding:6px 0}
 <div class="row"><input id="voteWritein" type="text" maxlength="60" placeholder="Or write-in: Name (Batch)"/></div>
 <div class="row"><button class="btn-dim" onclick="stepMove(-1)">Back</button><button class="btn-sec" onclick="stepMove(1)">Next</button><button class="btn-dim" onclick="useWritein()">Write-in</button></div>
 </div>
-<div class="card" style="margin-top:12px"><label><b>Your name — one ballot each</b></label>
+<div class="card" style="margin-top:12px"><div id="voteClosed" class="note lock" style="display:none;margin:0 0 10px">Nominations open — voting opens soon. You can browse nominees, but ballots are not accepted yet.</div><label><b>Your name — one ballot each</b></label>
 <input id="voter" type="text" maxlength="60" placeholder="Jane Doe (1996)"/>
 <div id="prog" class="progress"></div>
 <button id="voteBtn" class="btn-pri" onclick="submitVote()">Cast ballot</button>
@@ -175,6 +175,7 @@ details summary{cursor:pointer;color:#fff;padding:6px 0}
 </div>
 <div id="adminTools" style="display:none">
 <div class="note ok" id="adminStatus"></div>
+<div class="row"><button class="btn-sec" id="voteToggle" onclick="adminToggleVoting()">Open voting</button></div>
 <div class="row"><button class="btn-sec" onclick="adminExport()">Download data (JSON)</button></div>
 <div class="row"><button class="btn-dim" onclick="adminReset('votes')">Clear ballots (keep nominees)</button></div>
 <div class="row"><button class="btn-dim" onclick="adminReset('all')">Reset everything</button></div>
@@ -289,9 +290,11 @@ function stepMove(d){saveWritein();voteIdx=Math.max(0,Math.min(OFFICES.length-1,
 function saveWritein(){const o=curOffice();if(!o)return;const v=document.getElementById('voteWritein').value||'';if(v.trim()){writeins[o.slug]=v;delete sel[o.slug];} }
 function useWritein(){const o=curOffice();const v=(document.getElementById('voteWritein').value||'').trim();if(!v)return toast('Type a write-in name first');writeins[o.slug]=v;delete sel[o.slug];renderVoteShell();toast('Write-in saved for '+o.title);}
 function pick(race,id){sel[race]=id;delete writeins[race];if(curOffice()&&curOffice().slug===race){document.getElementById('voteWritein').value='';}renderVoteShell();}
-function updProg(){const done=OFFICES.filter(o=>sel[o.slug]||(writeins[o.slug]||'').trim()).length;document.getElementById('prog').textContent=`Ballot ${done}/${OFFICES.length} conveners picked`;}
+function updProg(){const done=OFFICES.filter(o=>sel[o.slug]||(writeins[o.slug]||'').trim()).length;document.getElementById('prog').textContent=`Ballot ${done}/${OFFICES.length} conveners picked`;
+const open=!!META.voting_open;document.getElementById('voteClosed').style.display=open?'none':'block';document.getElementById('voteBtn').disabled=!open;}
 async function submitVote(){
 saveWritein();
+if(!META.voting_open)return toast('Voting is not open yet — nominations only.');
 const voter=document.getElementById('voter').value.trim();
 if(!voter)return toast('Enter your name to vote');
 const choices={},wins={};
@@ -322,8 +325,17 @@ function renderAdmin(){
 const unlocked=!!ADMINTOK;
 document.getElementById('adminLock').style.display=unlocked?'none':'block';
 document.getElementById('adminTools').style.display=unlocked?'block':'none';
-if(unlocked)document.getElementById('adminStatus').textContent=`Unlocked · ${META.total_votes||0} ballot(s) · ${Object.values(CANDS).reduce((a,b)=>a+b.length,0)} nominee(s)`;
+if(unlocked){
+document.getElementById('adminStatus').textContent=`Unlocked · ${META.total_votes||0} ballot(s) · ${Object.values(CANDS).reduce((a,b)=>a+b.length,0)} nominee(s) · voting ${META.voting_open?'OPEN':'closed'}`;
+document.getElementById('voteToggle').textContent=META.voting_open?'Close voting':'Open voting';
+}
 else document.getElementById('adminHint').textContent=META.admin_enabled?'Enter the committee password.':'Admin password not set on server (ADMIN_TOKEN empty) — export is currently open.';
+}
+async function adminToggleVoting(){
+try{
+const r=await api('/api/admin/voting',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,open:!META.voting_open})});
+toast(r.voting_open?'Voting is OPEN':'Voting closed — nominations only');load(true);renderAdmin();
+}catch(e){toast(e.message);}
 }
 async function adminUnlock(){
 const pw=(document.getElementById('adminPw').value||'').trim();

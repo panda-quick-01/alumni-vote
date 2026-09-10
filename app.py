@@ -90,6 +90,10 @@ def init_db():
         descr TEXT NOT NULL DEFAULT 'Custom office',
         created_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+    );
     """)
     # Migrate legacy tables if present
     cols = [r["name"] for r in conn.execute("PRAGMA table_info(votes)")]
@@ -159,6 +163,20 @@ def all_races(conn):
 
 def norm(s):
     return (s or "").strip()
+
+def voting_open(conn):
+    # Nominations-only by default; admin opens voting when ready.
+    try:
+        row = conn.execute("SELECT value FROM settings WHERE key='voting_open'").fetchone()
+        return bool(row and row["value"] == "1")
+    except Exception:
+        return False
+
+def set_voting(conn, open_):
+    conn.execute("INSERT INTO settings (key, value) VALUES ('voting_open', ?) "
+                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                 ("1" if open_ else "0",))
+    conn.commit()
 
 def admin_ok(provided):
     # Admin tools (export/reset) need the token when one is configured.
@@ -292,6 +310,7 @@ def state():
         recent = [dict(r) for r in conn.execute(f"SELECT voter, created_at FROM {vt} ORDER BY id DESC LIMIT 8")]
     except Exception:
         recent = []
+    is_open = voting_open(conn)
     conn.close()
     return jsonify({
         "election": f"Alumni Meet {ELECTION_YEAR}",
@@ -303,6 +322,7 @@ def state():
         "elected_now": ELECTED_NOW,
         "coopt_later": COOPT_LATER,
         "offices_frozen": total > 0,
+        "voting_open": is_open,
         "admin_enabled": bool(ADMIN_TOKEN),
         "offices": offices,
         "candidates": cands,
@@ -380,6 +400,9 @@ def vote():
     # Required races = all current offices. Offices are frozen once the
     # first ballot is cast (see POST /api/offices), so all ballots stay complete.
     conn = get_db()
+    if not voting_open(conn):
+        conn.close()
+        return jsonify({"error": "Voting is not open yet — nominations only. The committee will announce when ballots open."}), 403
     offices_now = get_offices(conn)
     cmap_now = custom_map(conn)
     required = [o["slug"] for o in offices_now]
@@ -480,7 +503,7 @@ def reset():
     if not ADMIN_TOKEN:
         return jsonify({"error": "Reset disabled (set ADMIN_TOKEN to enable)"}), 403
     data = request.get_json(force=True, silent=True) or {}
-    if data.get("token") != ADMIN_TOKEN:
+    if not admin_ok(data.get("token")):
         return jsonify({"error": "Bad token"}), 403
     conn = get_db()
     if data.get("what") == "all":
@@ -490,6 +513,21 @@ def reset():
         conn.execute("DELETE FROM vote_choices"); conn.execute("DELETE FROM votes_new")
     conn.commit(); conn.close()
     return jsonify({"ok": True})
+
+@app.post("/api/admin/voting")
+def admin_voting():
+    if not ADMIN_TOKEN:
+        return jsonify({"error": "Admin disabled (set ADMIN_TOKEN to enable)"}), 403
+    data = request.get_json(force=True, silent=True) or {}
+    if not admin_ok(data.get("token")):
+        return jsonify({"error": "Bad token"}), 403
+    want = data.get("open")
+    if want not in (True, False):
+        return jsonify({"error": "Send {open: true/false}"}), 400
+    conn = get_db()
+    set_voting(conn, want)
+    conn.close()
+    return jsonify({"ok": True, "voting_open": want})
 
 @app.get("/")
 def index():
