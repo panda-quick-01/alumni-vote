@@ -21,9 +21,9 @@ CHAIRMAN = {"title": "Chairman", "held_by": "Principal or his appointee",
 
 # Public plan shown on the homepage so any visitor understands the road to Nov 2027.
 PLAN = [
-    {"phase": "1. Foundation", "when": "Sep – Dec 2026", "what": "Nominate + elect the Convener + Co-Convener crew under the Chairman. Role list frozen once first ballot is cast."},
-    {"phase": "2. Build", "when": "Jan – Jun 2027", "what": "Directory, venue booking, budget, sponsors, batch coordinators, save-the-date + website/WhatsApp."},
-    {"phase": "3. Execution", "when": "Jul – Oct 2027", "what": "Registrations, stay/transport/food, culture & sports program, mementos. Registration closes Oct 2027."},
+    {"phase": "1. Foundation", "when": "Sep – Dec 2026", "what": "Add names and elect the Convener crew under the Chairman. The job list gets fixed once voting starts."},
+    {"phase": "2. Build", "when": "Jan – Jun 2027", "what": "Directory, school premises layout & permissions, budget, sponsors, batch coordinators, save-the-date + WhatsApp updates."},
+    {"phase": "3. Execution", "when": "Jul – Oct 2027", "what": "Registrations, food, stay & travel help for outstation alumni, culture & sports program, mementos. Registration closes Oct 2027."},
     {"phase": "4. Meet + Audit", "when": "Nov – Dec 2027", "what": "Alumni Meet Nov 2027, felicitations, AGM, accounts + directory published."},
 ]
 ELECTED_NOW = ["Convener", "Co-Convener", "Operations Convener", "Registration & Outreach Convener", "Finance Convener", "Logistics Convener", "Programmes Convener", "Comms & PR Convener"]
@@ -31,13 +31,13 @@ COOPT_LATER = ["Registration", "Hospitality & Stay", "Transport", "Food & Cateri
 
 # Convener model. Chairman stays ex-officio (see CHAIRMAN). Slugs kept stable so existing ballots stay valid.
 OFFICES = [
-    {"slug": "president",            "title": "Convener",                          "emoji": "", "desc": "Convenes the committee, owns delivery"},
-    {"slug": "vice_president",       "title": "Co-Convener",                       "emoji": "", "desc": "Supports convener, acts in absence"},
-    {"slug": "general_secretary",    "title": "Operations Convener",               "emoji": "", "desc": "Cadence, minutes & coordination"},
-    {"slug": "joint_secretary",      "title": "Registration & Outreach Convener",  "emoji": "", "desc": "Batches, registrations & onboarding"},
-    {"slug": "treasurer",            "title": "Finance Convener",                  "emoji": "", "desc": "Budget, contributions & accounts"},
-    {"slug": "organizing_secretary", "title": "Logistics Convener",                "emoji": "", "desc": "Venue, stay, transport & volunteers"},
-    {"slug": "cultural_secretary",   "title": "Programmes Convener",               "emoji": "", "desc": "Stage, sports & felicitations"},
+    {"slug": "president",            "title": "Convener",                          "emoji": "", "desc": "Leads the committee"},
+    {"slug": "vice_president",       "title": "Co-Convener",                       "emoji": "", "desc": "Helps the convener"},
+    {"slug": "general_secretary",    "title": "Operations Convener",               "emoji": "", "desc": "Meetings, notes and coordination"},
+    {"slug": "joint_secretary",      "title": "Registration & Outreach Convener",  "emoji": "", "desc": "Batches and registrations"},
+    {"slug": "treasurer",            "title": "Finance Convener",                  "emoji": "", "desc": "Money and accounts"},
+    {"slug": "organizing_secretary", "title": "Logistics Convener",                "emoji": "", "desc": "School premises, stay, transport, volunteers"},
+    {"slug": "cultural_secretary",   "title": "Programmes Convener",               "emoji": "", "desc": "Stage, games and prizes"},
 ]
 OFFICE_MAP = {o["slug"]: o for o in OFFICES}
 
@@ -52,7 +52,7 @@ def pretty(slug, custom=None):
     if custom and slug in custom:
         return custom[slug]
     title = slug.replace("_", " ").title()
-    return {"slug": slug, "title": title, "emoji": "", "desc": "Custom role"}
+    return {"slug": slug, "title": title, "emoji": "", "desc": "Custom job"}
 
 def get_db():
     d = os.path.dirname(DB_PATH)
@@ -133,7 +133,7 @@ def db_votes_table():
 def custom_map(conn):
     try:
         return {r["slug"]: {"slug": r["slug"], "title": r["title"], "emoji": r["emoji"] or "",
-                            "desc": r["descr"] or "Custom role"}
+                            "desc": r["descr"] or "Custom job"}
                 for r in conn.execute("SELECT slug, title, emoji, descr FROM custom_offices")}
     except Exception:
         return {}
@@ -145,7 +145,7 @@ def get_offices(conn):
     for r in conn.execute("SELECT slug, title, emoji, descr, created_at FROM custom_offices ORDER BY created_at"):
         if r["slug"] not in seen:
             offices.append({"slug": r["slug"], "title": r["title"], "emoji": r["emoji"] or "",
-                            "desc": r["descr"] or "Custom role"})
+                            "desc": r["descr"] or "Custom job"})
             seen.add(r["slug"])
     # orphan races (e.g. added via write-in with a brand-new slug, or legacy 'secretary')
     try:
@@ -213,13 +213,13 @@ def create_office():
     data = request.get_json(force=True, silent=True) or {}
     title = norm(data.get("title"))
     emoji = norm(data.get("emoji")) or ""
-    desc = norm(data.get("desc") or data.get("description")) or "Custom role"
+    desc = norm(data.get("desc") or data.get("description")) or "Custom job"
     first_nominee = norm(data.get("first_nominee") or data.get("firstNominee") or "")
     if not title or len(title) < 2 or len(title) > 40:
-        return jsonify({"error": "Role title must be 2-40 characters"}), 400
+        return jsonify({"error": "Job title must be 2-40 characters"}), 400
     slug = slugify(data.get("slug") or title)
     if not slug or len(slug) < 2:
-        return jsonify({"error": "Could not make a valid role id from that title"}), 400
+        return jsonify({"error": "Could not make a valid job from that title"}), 400
     if slug in OFFICE_MAP:
         return jsonify({"error": f"'{OFFICE_MAP[slug]['title']}' already exists"}), 409
     if len(emoji) > 8:
@@ -235,7 +235,7 @@ def create_office():
         nvotes = 0
     if nvotes > 0:
         conn.close()
-        return jsonify({"error": "Roles frozen — votes already cast. New roles need a fresh election/reset."}), 409
+        return jsonify({"error": "Voting has started, so new jobs cannot be added."}), 409
     try:
         conn.execute("INSERT INTO custom_offices (slug, title, emoji, descr, created_at) VALUES (?,?,?,?,?)",
                      (slug, title, emoji, desc, datetime.utcnow().isoformat()))
@@ -243,7 +243,7 @@ def create_office():
         if first_nominee:
             if len(first_nominee) < 2 or len(first_nominee) > 60:
                 conn.rollback(); conn.close()
-                return jsonify({"error": "First nominee must be 2-60 characters"}), 400
+                return jsonify({"error": "That name must be 2-60 characters"}), 400
             try:
                 cur = conn.execute("INSERT INTO candidates (race, name, created_at) VALUES (?,?,?)",
                                    (slug, first_nominee, datetime.utcnow().isoformat()))
@@ -262,7 +262,7 @@ def create_office():
 def delete_office(slug):
     slug = slugify(slug)
     if slug in OFFICE_MAP:
-        return jsonify({"error": "Core roles cannot be deleted"}), 400
+        return jsonify({"error": "The 7 main jobs cannot be removed"}), 400
     conn = get_db()
     row = conn.execute("SELECT slug FROM custom_offices WHERE slug=?", (slug,)).fetchone()
     if not row:
@@ -270,11 +270,11 @@ def delete_office(slug):
         has_c = conn.execute("SELECT 1 FROM candidates WHERE race=? LIMIT 1", (slug,)).fetchone()
         if not has_c:
             conn.close()
-            return jsonify({"error": "Role not found"}), 404
+            return jsonify({"error": "Job not found"}), 404
     used = conn.execute("SELECT COUNT(*) c FROM vote_choices WHERE race=?", (slug,)).fetchone()["c"]
     if used:
         conn.close()
-        return jsonify({"error": "Cannot delete — votes already cast for this role"}), 409
+        return jsonify({"error": "Voting has started, so this job cannot be removed"}), 409
     conn.execute("DELETE FROM candidates WHERE race=?", (slug,))
     conn.execute("DELETE FROM custom_offices WHERE slug=?", (slug,))
     conn.commit(); conn.close()
@@ -340,7 +340,7 @@ def add_candidate():
     race = slugify(data.get("race"))
     name = norm(data.get("name"))
     if not race:
-        return jsonify({"error": "Role is required"}), 400
+        return jsonify({"error": "Please pick a job first"}), 400
     if not name or len(name) < 2 or len(name) > 60:
         return jsonify({"error": "Name must be 2-60 characters"}), 400
     conn = get_db()
@@ -355,7 +355,7 @@ def add_candidate():
         if nv > 0 and race not in existing:
             # allow legacy 'secretary' alias etc. only if already known
             conn.close()
-            return jsonify({"error": "Roles frozen — votes already cast. Cannot create a new role via nomination."}), 409
+            return jsonify({"error": "Voting has started, so new jobs cannot be added."}), 409
     except Exception:
         pass
     try:
@@ -365,7 +365,7 @@ def add_candidate():
         cid = cur.lastrowid
     except sqlite3.IntegrityError:
         conn.close()
-        return jsonify({"error": f"'{name}' is already nominated for {pretty(race)['title']}"}), 409
+        return jsonify({"error": f"'{name}' is already added for {pretty(race)['title']}"}), 409
     conn.close()
     return jsonify({"ok": True, "id": cid, "race": race, "name": name})
 
@@ -405,7 +405,7 @@ def vote():
     conn = get_db()
     if not voting_open(conn):
         conn.close()
-        return jsonify({"error": "Voting is not open yet — nominations only. The committee will announce when ballots open."}), 403
+        return jsonify({"error": "Voting has not opened yet — we are still collecting names. Please come back when voting opens."}), 403
     offices_now = get_offices(conn)
     cmap_now = custom_map(conn)
     required = [o["slug"] for o in offices_now]
@@ -416,6 +416,11 @@ def vote():
         return pretty(slug, cmap_now)["title"]
     try:
         resolved = {}
+        # how many ballots exist already? (a new job mid-vote would be unfair)
+        try:
+            prior_votes = conn.execute("SELECT COUNT(*) c FROM votes_new").fetchone()["c"]
+        except Exception:
+            prior_votes = 0
         # apply write-ins first (create candidate if needed)
         for race, wname in list(writeins.items()):
             race = slugify(race)
@@ -423,7 +428,9 @@ def vote():
             if not wname:
                 continue
             if len(wname) < 2 or len(wname) > 60:
-                return jsonify({"error": f"Write-in for {pt(race)} must be 2-60 chars"}), 400
+                return jsonify({"error": f"Name for {pt(race)} must be 2-60 characters"}), 400
+            if prior_votes > 0 and race not in required:
+                return jsonify({"error": "Voting has started, so new jobs cannot be added."}), 409
             try:
                 cur = conn.execute("INSERT INTO candidates (race,name,created_at) VALUES (?,?,?)",
                                    (race, wname, datetime.utcnow().isoformat()))
@@ -444,13 +451,13 @@ def vote():
 
         missing = [pt(r) for r in required if r not in resolved]
         if missing:
-            return jsonify({"error": "Missing vote for: " + ", ".join(missing)}), 400
+            return jsonify({"error": "Please pick someone for: " + ", ".join(missing)}), 400
 
         # validate candidate ids
         for race, cid in resolved.items():
             ok = conn.execute("SELECT id FROM candidates WHERE id=? AND race=?", (cid, race)).fetchone()
             if not ok:
-                return jsonify({"error": f"Invalid candidate for {pt(race)}"}), 400
+                return jsonify({"error": f"That name is not listed for {pt(race)}"}), 400
 
         try:
             cur = conn.execute("INSERT INTO votes_new (voter, created_at) VALUES (?,?)",

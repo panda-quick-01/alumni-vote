@@ -96,45 +96,52 @@ details summary{cursor:pointer;color:#fff;padding:6px 0}
 <div class="badge" id="meetBadge"><i></i>Alumni Meet · Nov 2027 · 2026–27</div>
 <div class="eyebrow">Convener committee election</div>
 <h1 id="meetTitle">Elect the Conveners</h1>
-<p>19 batches, ~40 each. Chairman is the Principal or his appointee (ex-officio, not elected). We elect the Convener + Co-Convener crew in 2026 to ship the Nov 2027 meet.</p>
+<p>Our Chairman is the Principal (not elected). We will elect 7 conveners in 2026 for our school meet in November 2027.</p>
 <div style="margin-top:12px"><a class="wa-btn" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">Follow updates on WhatsApp</a></div>
 </header>
 
 <div class="stats">
-<div><b id="tVotes">0</b><span>Ballots</span></div>
-<div><b id="tCands">0</b><span>Nominees</span></div>
+<div><b id="tVotes">0</b><span>Votes</span></div>
+<div><b id="tCands">0</b><span>Names</span></div>
 <div><b id="tOff">7</b><span>Conveners</span></div>
 <div><b>760</b><span>Pool ~</span></div>
 </div>
 
 <div class="tabs" id="tabs">
 <button id="tabPlan" class="on" onclick="show('plan')">Plan</button>
-<button id="tabNominate" onclick="show('nominate')">Nominate</button>
+<button id="tabNominate" onclick="show('nominate')">Add names</button>
 <button id="tabVote" onclick="show('vote')">Vote</button>
 <button id="tabRes" onclick="show('res')">Results</button>
 </div>
 
 <div id="panePlan">
-<div class="card"><h2>Chairman <span class="meta">ex-officio · not on ballot</span></h2><div id="chairLine" style="font-size:14px;margin-top:6px">Principal or his appointee chairs the meet.</div></div>
-<div class="card" style="margin-top:12px"><h2>Road to November 2027</h2><small>Sep 2026 → Nov 2027 · elect now, convene all year</small>
+<div class="card"><h2>How this works — 3 easy steps</h2>
+<div class="timeline" style="margin-top:10px">
+<div class="phase"><span>Step 1 · now</span><b>Add names</b><p>Type the name of anyone you want to stand, under their job. Anyone can add a name.</p></div>
+<div class="phase"><span>Step 2 · later</span><b>Vote</b><p>When voting opens, tap one name for each of the 7 jobs and press Cast my vote. One vote per person.</p></div>
+<div class="phase"><span>Step 3 · anytime</span><b>See results</b><p>Come back here to see who is leading for each job.</p></div>
+</div>
+<div class="row"><button class="btn-sec" onclick="show('nominate')">Start with Step 1</button></div></div>
+<div class="card" style="margin-top:12px"><h2>Chairman <span class="meta">not elected here</span></h2><div id="chairLine" style="font-size:14px;margin-top:6px">Our Principal chairs the meet.</div></div>
+<div class="card" style="margin-top:12px"><h2>Road to November 2027</h2><small>Sep 2026 → Nov 2027</small>
 <div id="planGrid" class="timeline"></div><div id="freezeNote" class="note ok"></div></div>
 <div class="grid grid2" style="margin-top:12px">
-<div class="card"><h2>Convener + Co-Conveners — on ballot</h2><small>Elected crew · one full ballot per person</small><div id="electList" style="margin-top:8px"></div></div>
-<div class="card"><h2>Crews later — co-opted</h2><small>Named by the committee Jan–Jun 2027, no ballot</small><div id="cooptList" style="margin-top:8px"></div></div>
+<div class="card"><h2>7 jobs we will elect</h2><small>One vote per person, for all 7 jobs</small><div id="electList" style="margin-top:8px"></div></div>
+<div class="card"><h2>Other teams — decided later</h2><small>No vote needed for these; the committee will form them in 2027</small><div id="cooptList" style="margin-top:8px"></div></div>
 </div>
-<div class="card" style="margin-top:12px"><h2>Freeze rule</h2><small>Role list locks after the first ballot, so early voters are never short-changed. After that: add names, never new roles.</small>
-<div class="row"><button class="btn-dim" onclick="show('nominate')">1 · Nominate</button><button class="btn-sec" onclick="show('vote')">2 · Vote</button></div></div>
+<div class="card" style="margin-top:12px"><h2>One important rule</h2><small>Once voting starts, the job list cannot change — so nobody's vote goes waste.</small>
+<div class="row"><button class="btn-dim" onclick="show('nominate')">1 · Add names</button><button class="btn-sec" onclick="show('vote')">2 · Vote</button></div></div>
 </div>
 
 <div id="paneNominate" style="display:none">
-<div class="card"><h2>Nominate</h2><small>Format <b>Name (Batch)</b> — e.g. Anita Rao (2004). Counts here, full searchable lists in Vote.</small>
-<div class="row"><input id="nomSearch" type="search" placeholder="Search nominees…" oninput="renderNominate()"/></div>
+<div class="card"><h2>Add names</h2><small>Write the person's full name. If you know their batch year, add it: <b>Anita Rao (2004)</b>.</small>
+<div class="row"><input id="nomSearch" type="search" placeholder="Search names…" oninput="renderNominate()"/></div>
 <div class="row"><select id="nomOffice" onchange="renderNominate()"></select></div>
 </div>
 <div id="nomGrid" class="grid grid2" style="margin-top:12px"></div>
-<div class="card" style="margin-top:12px"><h2>New role? <span class="meta">before first ballot only</span></h2><small>Locked once voting starts.</small>
-<div class="row"><input id="newOffice" type="text" maxlength="40" placeholder="Role title, e.g. Sports Convener"/></div>
-<div class="row"><input id="newOfficeNom" type="text" maxlength="60" placeholder="First nominee — Name (Batch)"/><button class="btn-dim" onclick="addOffice()">Create</button></div></div>
+<div class="card" style="margin-top:12px"><h2>Missing a job? <span class="meta">only before voting starts</span></h2><small>You can add a new job now. Once voting starts, the list is fixed.</small>
+<div class="row"><input id="newOffice" type="text" maxlength="40" placeholder="Job title, e.g. Sports Convener"/></div>
+<div class="row"><input id="newOfficeNom" type="text" maxlength="60" placeholder="First person's name"/><button class="btn-dim" onclick="addOffice()">Add job</button></div></div>
 </div>
 
 <div id="paneVote" style="display:none">
@@ -144,25 +151,25 @@ details summary{cursor:pointer;color:#fff;padding:6px 0}
 <div class="card">
 <div style="display:flex;gap:8px;align-items:baseline;justify-content:space-between"><h2 id="voteTitle">Vote</h2><span class="meta" id="voteCount"></span></div>
 <small id="voteDesc"></small>
-<div class="row"><input id="voteSearch" type="search" placeholder="Filter names — try a batch year" oninput="renderVoteList()"/></div>
+<div class="row"><input id="voteSearch" type="search" placeholder="Search name…" oninput="renderVoteList()"/></div>
 <div id="voteList" class="candlist"></div>
-<div class="row"><input id="voteWritein" type="text" maxlength="60" placeholder="Or write-in: Name (Batch)"/></div>
-<div class="row"><button class="btn-dim" onclick="stepMove(-1)">Back</button><button class="btn-sec" onclick="stepMove(1)">Next</button><button class="btn-dim" onclick="useWritein()">Write-in</button></div>
+<div class="row"><input id="voteWritein" type="text" maxlength="60" placeholder="Name not in the list? Type it here"/></div>
+<div class="row"><button class="btn-dim" onclick="stepMove(-1)">Back</button><button class="btn-sec" onclick="stepMove(1)">Next job</button><button class="btn-dim" onclick="useWritein()">Add this name</button></div>
 </div>
-<div class="card" style="margin-top:12px"><div id="voteClosed" class="note lock" style="display:none;margin:0 0 10px">Nominations open — voting opens soon. You can browse nominees, but ballots are not accepted yet.</div><label><b>Your name — one ballot each</b></label>
-<input id="voter" type="text" maxlength="60" placeholder="Jane Doe (1996)"/>
+<div class="card" style="margin-top:12px"><div id="voteClosed" class="note lock" style="display:none;margin:0 0 10px">We are still collecting names — voting will open soon. You can look at the names below, but you cannot vote yet.</div><label><b>Your name</b></label>
+<input id="voter" type="text" maxlength="60" placeholder="Your full name"/>
 <div id="prog" class="progress"></div>
-<button id="voteBtn" class="btn-pri" onclick="submitVote()">Cast ballot</button>
-<div class="hint">One pick per role.</div></div>
+<button id="voteBtn" class="btn-pri" onclick="submitVote()">Cast my vote</button>
+<div class="hint">Tap one name for each job, then press the button.</div></div>
 </div>
 </div>
 </div>
 
 <div id="paneRes" style="display:none">
-<div class="card"><h2>Results</h2><small>Conveners first. Built for hundreds of names.</small>
-<div class="row"><select id="resOffice" onchange="renderRes()"><option value="">All roles</option></select><input id="resSearch" type="search" placeholder="Search name…" oninput="renderRes()"/></div></div>
+<div class="card"><h2>Results</h2><small>See who is leading for each job.</small>
+<div class="row"><select id="resOffice" onchange="renderRes()"><option value="">All jobs</option></select><input id="resSearch" type="search" placeholder="Search name…" oninput="renderRes()"/></div></div>
 <div id="resGrid" class="grid grid2" style="margin-top:12px"></div>
-<div class="card" style="margin-top:12px"><h2>Recent ballots</h2><div id="recent" style="font-size:14px;color:#D4D4D8"></div></div>
+<div class="card" style="margin-top:12px"><h2>Recent votes</h2><div id="recent" style="font-size:14px;color:#D4D4D8"></div></div>
 </div>
 
 <div id="paneAdmin" style="display:none">
@@ -176,8 +183,8 @@ details summary{cursor:pointer;color:#fff;padding:6px 0}
 <div class="note ok" id="adminStatus"></div>
 <div class="row"><button class="btn-sec" id="voteToggle" onclick="adminToggleVoting()">Open voting</button></div>
 <div class="row"><button class="btn-sec" onclick="adminExport()">Download data (JSON)</button></div>
-<div class="row"><button class="btn-dim" onclick="adminReset('votes')">Clear ballots (keep nominees)</button></div>
-<div class="row"><button class="btn-dim" onclick="adminReset('all')">Reset everything</button></div>
+<div class="row"><button class="btn-dim" onclick="adminReset('votes')">Delete all votes (keep names)</button></div>
+<div class="row"><button class="btn-dim" onclick="adminReset('all')">Delete everything</button></div>
 <div class="row"><button class="btn-dim" onclick="adminLock()">Lock</button></div>
 </div>
 </div>
@@ -225,15 +232,15 @@ document.getElementById('planGrid').innerHTML=(s.plan||[]).map(p=>`<div class="p
 document.getElementById('electList').innerHTML=(s.elected_now||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
 document.getElementById('cooptList').innerHTML=(s.coopt_later||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
 const f=document.getElementById('freezeNote');
-if(s.offices_frozen){f.className='note lock';f.textContent=`Locked — ${s.total_votes} ballot(s) cast. Roles frozen.`;}
-else{f.className='note ok';f.textContent='Open — nominate now. Roles lock after the first ballot.';}
+if(s.offices_frozen){f.className='note lock';f.textContent=`Voting has started — ${s.total_votes} vote(s) so far. The job list is now fixed.`;}
+else{f.className='note ok';f.textContent='We are collecting names now. The job list gets fixed once voting starts.';}
 }
 function renderNominate(keep){
 OFFICES.forEach(o=>{const el=document.getElementById('add_'+o.slug);if(el)addDrafts[o.slug]=el.value;});
 const q=(document.getElementById('nomSearch').value||'').toLowerCase();
 const sel2=document.getElementById('nomOffice');
 const cur=sel2.value;
-sel2.innerHTML='<option value="">All roles</option>'+OFFICES.map(o=>`<option value="${o.slug}">${esc(o.title)}</option>`).join('');
+sel2.innerHTML='<option value="">All jobs</option>'+OFFICES.map(o=>`<option value="${o.slug}">${esc(o.title)}</option>`).join('');
 sel2.value=cur;
 const f=sel2.value;
 const offices=OFFICES.filter(o=>!f||o.slug===f);
@@ -241,17 +248,17 @@ document.getElementById('nomGrid').innerHTML=offices.map(o=>{
 const list=(CANDS[o.slug]||[]).filter(c=>!q||c.name.toLowerCase().includes(q));
 const prev=list.slice(0,3).map(c=>esc(c.name)).join(', ')||'—';
 return `<div class="card"><div class="nomrow"><div><b>${esc(o.title)}</b><br/><small>${esc(o.desc||'')} · ${esc(prev)}${list.length>3?' …':''}</small></div><span class="count">${list.length}${q?' / '+((CANDS[o.slug]||[]).length):''}</span></div>
-<div class="row"><input id="add_${o.slug}" type="text" maxlength="60" placeholder="Name (Batch)" value="${esc(addDrafts[o.slug]||'')}" oninput="addDrafts['${o.slug}']=this.value"/><button class="btn-dim" onclick="addCand('${o.slug}')">Add</button></div></div>`}).join('')||'<div class="card">No match.</div>';
+<div class="row"><input id="add_${o.slug}" type="text" maxlength="60" placeholder="Type full name" value="${esc(addDrafts[o.slug]||'')}" oninput="addDrafts['${o.slug}']=this.value"/><button class="btn-dim" onclick="addCand('${o.slug}')">Add</button></div></div>`}).join('')||'<div class="card">No match.</div>';
 OFFICES.forEach(o=>{const el=document.getElementById('add_'+o.slug);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')addCand(o.slug)})});
 }
 async function addCand(race){
-const inp=document.getElementById('add_'+race);const name=(inp.value||'').trim();if(!name)return toast('Type Name (Batch) first');
-try{const r=await api('/api/candidates',{method:'POST',body:JSON.stringify({race,name})});sel[race]=r.id;delete writeins[race];addDrafts[race]='';toast('Nominated '+name);load(true);}catch(e){toast(e.message)}
+const inp=document.getElementById('add_'+race);const name=(inp.value||'').trim();if(!name)return toast('Please type a name first');
+try{const r=await api('/api/candidates',{method:'POST',body:JSON.stringify({race,name})});sel[race]=r.id;delete writeins[race];addDrafts[race]='';toast('Added '+name+'. Thank you!');load(true);}catch(e){toast(e.message)}
 }
 async function addOffice(){
 const t=document.getElementById('newOffice');const n=document.getElementById('newOfficeNom');
-if(!(t.value||'').trim())return toast('Type a role title first');
-try{const r=await api('/api/offices',{method:'POST',body:JSON.stringify({title:t.value.trim(),first_nominee:(n.value||'').trim()||undefined})});t.value='';n.value='';toast('Role created: '+r.title);load(true);}catch(e){toast(e.message)}
+if(!(t.value||'').trim())return toast('Please type a job title first');
+try{const r=await api('/api/offices',{method:'POST',body:JSON.stringify({title:t.value.trim(),first_nominee:(n.value||'').trim()||undefined})});t.value='';n.value='';toast('Job added: '+r.title);load(true);}catch(e){toast(e.message)}
 }
 function curOffice(){return OFFICES[Math.min(voteIdx,OFFICES.length-1)]}
 function renderVoteShell(keep){
@@ -263,7 +270,7 @@ const vl0=document.getElementById('voteList');const scTop=vl0?vl0.scrollTop:0;
 const done=OFFICES.filter(x=>sel[x.slug]||(writeins[x.slug]||'').trim()).length;
 document.getElementById('voteSteps').innerHTML=OFFICES.map((oo,i)=>{
 const cls=sel[oo.slug]||(writeins[oo.slug]||'').trim()?'done':(i===voteIdx?'cur':'');
-return `<button class="stepbtn ${cls}" onclick="jumpStep(${i})"><span class="n">${sel[oo.slug]||(writeins[oo.slug]||'').trim()?'✓':(i+1)}</span><span><b>${esc(oo.title)}</b><small>${sel[oo.slug]?esc(nameOf(oo.slug,sel[oo.slug])):(writeins[oo.slug]||'').trim()?esc('✎ '+writeins[oo.slug].trim()):(CANDS[oo.slug]||[]).length+' nominees'}</small></span></button>`}).join('')
+return `<button class="stepbtn ${cls}" onclick="jumpStep(${i})"><span class="n">${sel[oo.slug]||(writeins[oo.slug]||'').trim()?'✓':(i+1)}</span><span><b>${esc(oo.title)}</b><small>${sel[oo.slug]?esc(nameOf(oo.slug,sel[oo.slug])):(writeins[oo.slug]||'').trim()?esc(writeins[oo.slug].trim()):(CANDS[oo.slug]||[]).length+' names'}</small></span></button>`}).join('')
 +``;
 renderVoteList();
 const vl1=document.getElementById('voteList');if(vl1)vl1.scrollTop=scTop;
@@ -274,42 +281,42 @@ updProg();
 function nameOf(race,id){const c=(CANDS[race]||[]).find(x=>x.id===id);return c?c.name:''}
 function renderVoteList(){
 const o=curOffice();if(!o)return;
-document.getElementById('voteTitle').textContent=`${o.title} · ${voteIdx+1}/${OFFICES.length}`;
+document.getElementById('voteTitle').textContent=`Job ${voteIdx+1} of ${OFFICES.length}: ${o.title}`;
 document.getElementById('voteDesc').textContent=o.desc||'';
-document.getElementById('voteCount').textContent=(CANDS[o.slug]||[]).length+' nominees';
+document.getElementById('voteCount').textContent=(CANDS[o.slug]||[]).length+' names';
 const q=(document.getElementById('voteSearch').value||'').toLowerCase();
 let list=(CANDS[o.slug]||[]).filter(c=>!q||c.name.toLowerCase().includes(q));
 const total=list.length;list=list.slice(0,voteLimit);
 document.getElementById('voteList').innerHTML=(list.map(c=>{
 const b=batchOf(c.name);
-return `<label class="cand ${sel[o.slug]===c.id?'sel':''}"><input type="radio" name="${o.slug}" ${sel[o.slug]===c.id?'checked':''} onchange="pick('${o.slug}',${c.id})"/><span class="nm">${esc(c.name)}</span>${b?`<span class="bt">${esc(b)}</span>`:''}</label>`}).join('')||'<div style="padding:14px;color:var(--mut)">No match — use write-in.</div>')
-+(total>voteLimit?`<div style="padding:10px;text-align:center"><button class="btn-dim" onclick="voteLimit+=50;renderVoteList()">Show more (${total-voteLimit} left)</button></div>`:'')
-+((writeins[o.slug]||'').trim()?`<div style="padding:10px;color:#fff">Write-in: <b>${esc((writeins[o.slug]||'').trim())}</b> <a href="#" onclick="clearW('${o.slug}');return false">clear</a></div>`:'');
+return `<label class="cand ${sel[o.slug]===c.id?'sel':''}"><input type="radio" name="${o.slug}" ${sel[o.slug]===c.id?'checked':''} onchange="pick('${o.slug}',${c.id})"/><span class="nm">${esc(c.name)}</span>${b?`<span class="bt">${esc(b)}</span>`:''}</label>`}).join('')||'<div style="padding:14px;color:var(--mut)">No match — type the name below.</div>')
++(total>voteLimit?`<div style="padding:10px;text-align:center"><button class="btn-dim" onclick="voteLimit+=50;renderVoteList()">See more names (${total-voteLimit} more)</button></div>`:'')
++((writeins[o.slug]||'').trim()?`<div style="padding:10px;color:#fff">Your added name: <b>${esc((writeins[o.slug]||'').trim())}</b> <a href="#" onclick="clearW('${o.slug}');return false">remove</a></div>`:'');
 }
 function clearW(r){delete writeins[r];const el=document.getElementById('voteWritein');if(el)el.value='';renderVoteShell();}
 function jumpStep(i){saveWritein();voteIdx=i;voteLimit=30;document.getElementById('voteSearch').value='';document.getElementById('voteWritein').value=writeins[curOffice().slug]||'';renderVoteShell();}
 function stepMove(d){saveWritein();voteIdx=Math.max(0,Math.min(OFFICES.length-1,voteIdx+d));voteLimit=30;document.getElementById('voteSearch').value='';const o=curOffice();document.getElementById('voteWritein').value=writeins[o.slug]||'';renderVoteShell();}
 function saveWritein(){const o=curOffice();if(!o)return;const v=document.getElementById('voteWritein').value||'';if(v.trim()){writeins[o.slug]=v;delete sel[o.slug];} }
-function useWritein(){const o=curOffice();const v=(document.getElementById('voteWritein').value||'').trim();if(!v)return toast('Type a write-in name first');writeins[o.slug]=v;delete sel[o.slug];renderVoteShell();toast('Write-in saved for '+o.title);}
+function useWritein(){const o=curOffice();const v=(document.getElementById('voteWritein').value||'').trim();if(!v)return toast('Please type the name first');writeins[o.slug]=v;delete sel[o.slug];renderVoteShell();toast('Name saved for '+o.title);}
 function pick(race,id){sel[race]=id;delete writeins[race];if(curOffice()&&curOffice().slug===race){document.getElementById('voteWritein').value='';}renderVoteShell();}
-function updProg(){const done=OFFICES.filter(o=>sel[o.slug]||(writeins[o.slug]||'').trim()).length;document.getElementById('prog').textContent=`Ballot ${done}/${OFFICES.length} conveners picked`;
+function updProg(){const done=OFFICES.filter(o=>sel[o.slug]||(writeins[o.slug]||'').trim()).length;document.getElementById('prog').textContent=`You picked ${done} of ${OFFICES.length}`;
 const open=!!META.voting_open;document.getElementById('voteClosed').style.display=open?'none':'block';document.getElementById('voteBtn').disabled=!open;}
 async function submitVote(){
 saveWritein();
-if(!META.voting_open)return toast('Voting is not open yet — nominations only.');
+if(!META.voting_open)return toast('Voting has not opened yet — we are still collecting names.');
 const voter=document.getElementById('voter').value.trim();
-if(!voter)return toast('Enter your name to vote');
+if(!voter)return toast('Please type your name');
 const choices={},wins={};
 OFFICES.forEach(o=>{if(sel[o.slug])choices[o.slug]=sel[o.slug];const w=(writeins[o.slug]||'').trim();if(w&&!sel[o.slug])wins[o.slug]=w;});
 const missing=OFFICES.filter(o=>!choices[o.slug]&&!wins[o.slug]);
-if(missing.length){voteIdx=OFFICES.indexOf(missing[0]);renderVoteShell();return toast('Missing: '+missing.map(o=>o.title).join(', '));}
+if(missing.length){voteIdx=OFFICES.indexOf(missing[0]);renderVoteShell();return toast('Please pick someone for: '+missing.map(o=>o.title).join(', '));}
 const btn=document.getElementById('voteBtn');btn.disabled=true;
-try{await api('/api/vote',{method:'POST',body:JSON.stringify({voter,choices,writeins:wins})});toast('Ballot counted. Thank you '+voter);sel={};writeins={};voteIdx=0;document.getElementById('voter').value='';document.getElementById('voteWritein').value='';load(true);show('res');}catch(e){toast(e.message)}finally{btn.disabled=false}
+try{await api('/api/vote',{method:'POST',body:JSON.stringify({voter,choices,writeins:wins})});toast('Thank you '+voter+' — your vote is counted.');sel={};writeins={};voteIdx=0;document.getElementById('voter').value='';document.getElementById('voteWritein').value='';load(true);show('res');}catch(e){toast(e.message)}finally{btn.disabled=false}
 }
 function renderRes(){
 const selO=document.getElementById('resOffice');
 const cur=selO.value;
-selO.innerHTML='<option value="">All roles</option>'+OFFICES.map(o=>`<option value="${o.slug}">${esc(o.title)}</option>`).join('');
+selO.innerHTML='<option value="">All jobs</option>'+OFFICES.map(o=>`<option value="${o.slug}">${esc(o.title)}</option>`).join('');
 selO.value=cur;
 const f=selO.value,q=(document.getElementById('resSearch').value||'').toLowerCase();
 const offices=OFFICES.filter(o=>!f||o.slug===f);
@@ -317,8 +324,8 @@ document.getElementById('resGrid').innerHTML=offices.map(o=>{
 let arr=(RESULTS[o.slug]||[]).filter(r=>!q||r.name.toLowerCase().includes(q));
 const top=arr.slice(0,3),rest=arr.slice(3);
 const row=r=>`<div class="resrow"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><span>${r.votes} · ${r.pct}%</span></div><div class="bar"><i style="width:${r.pct}%"></i></div></div>`;
-return `<div class="card"><h2>${esc(o.title)}</h2><small>${arr.length} contenders${q?' (filtered)':''}</small>${top.map(row).join('')||'<p style="color:var(--mut)">No nominees yet.</p>'}${rest.length?`<details><summary>+ ${rest.length} more</summary>${rest.map(row).join('')}</details>`:''}</div>`}).join('')||'<div class="card">No match.</div>';
-document.getElementById('recent').innerHTML=RECENT.length?RECENT.map(v=>`${esc(v.voter)} <span style="opacity:.6">· ${new Date(v.created_at+'Z').toLocaleString()}</span>`).join('<br>'):'No ballots yet — be the first.';
+return `<div class="card"><h2>${esc(o.title)}</h2><small>${arr.length} name(s)${q?' (matching your search)':''}</small>${top.map(row).join('')||'<p style="color:var(--mut)">No names yet.</p>'}${rest.length?`<details><summary>See ${rest.length} more</summary>${rest.map(row).join('')}</details>`:''}</div>`}).join('')||'<div class="card">No match.</div>';
+document.getElementById('recent').innerHTML=RECENT.length?RECENT.map(v=>`${esc(v.voter)} <span style="opacity:.6">· ${new Date(v.created_at+'Z').toLocaleString()}</span>`).join('<br>'):'No votes yet.';
 }
 // ADMIN (committee only — password in ADMIN_TOKEN env)
 let ADMINTOK=sessionStorage.getItem('adminTok')||'';
@@ -336,12 +343,12 @@ else document.getElementById('adminHint').textContent=META.admin_enabled?'Enter 
 async function adminToggleVoting(){
 try{
 const r=await api('/api/admin/voting',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,open:!META.voting_open})});
-toast(r.voting_open?'Voting is OPEN':'Voting closed — nominations only');load(true);renderAdmin();
+toast(r.voting_open?'Voting is now open.':'Voting closed. Collecting names only.');load(true);renderAdmin();
 }catch(e){toast(e.message);}
 }
 async function adminUnlock(){
 const pw=(document.getElementById('adminPw').value||'').trim();
-if(!pw)return toast('Enter password');
+if(!pw)return toast('Please enter the password');
 try{
 const r=await fetch('/api/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:pw})});
 if(!r.ok)throw new Error('Wrong password');
@@ -361,7 +368,7 @@ toast('Downloaded');
 }catch(e){toast(e.message);if(/password|admin/i.test(e.message))adminLock();}
 }
 async function adminReset(what){
-if(!confirm(what==='all'?'Reset EVERYTHING (ballots + nominees + roles)?':'Clear all ballots (keep nominees)?'))return;
+if(!confirm(what==='all'?'Delete EVERYTHING (all names and votes)? This cannot be undone.':'Delete all votes? The names will stay.'))return;
 try{await api('/api/reset',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,what})});toast('Done');load(true);renderAdmin();}catch(e){toast(e.message);if(/token|password|admin/i.test(e.message))adminLock();}
 }
 document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')adminUnlock();});
