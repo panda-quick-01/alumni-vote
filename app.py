@@ -195,6 +195,28 @@ def create_office():
     return jsonify({"ok": True, "slug": slug, "title": title, "emoji": emoji,
                     "desc": desc, "first_candidate_id": cid})
 
+@app.delete("/api/offices/<slug>")
+def delete_office(slug):
+    slug = slugify(slug)
+    if slug in OFFICE_MAP:
+        return jsonify({"error": "Core offices cannot be deleted"}), 400
+    conn = get_db()
+    row = conn.execute("SELECT slug FROM custom_offices WHERE slug=?", (slug,)).fetchone()
+    if not row:
+        # also allow removing orphan races created implicitly (no custom_offices row)
+        has_c = conn.execute("SELECT 1 FROM candidates WHERE race=? LIMIT 1", (slug,)).fetchone()
+        if not has_c:
+            conn.close()
+            return jsonify({"error": "Office not found"}), 404
+    used = conn.execute("SELECT COUNT(*) c FROM vote_choices WHERE race=?", (slug,)).fetchone()["c"]
+    if used:
+        conn.close()
+        return jsonify({"error": "Cannot delete — votes already cast for this office"}), 409
+    conn.execute("DELETE FROM candidates WHERE race=?", (slug,))
+    conn.execute("DELETE FROM custom_offices WHERE slug=?", (slug,))
+    conn.commit(); conn.close()
+    return jsonify({"ok": True})
+
 @app.get("/api/state")
 def state():
     conn = get_db()
