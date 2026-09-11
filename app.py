@@ -63,9 +63,12 @@ ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 # Secret admin URL path, e.g. ADMIN_PATH=committee-9f3a2c -> site.com/committee-9f3a2c
 # No Admin tab is shown publicly; only this path reveals it.
 ADMIN_PATH = os.environ.get("ADMIN_PATH", "").strip().strip("/")
-ELECTION_YEAR = os.environ.get("ELECTION_YEAR", "2027")
-MEET_WHEN = os.environ.get("MEET_WHEN", "November 2027")
-TERM_LABEL = os.environ.get("TERM_LABEL", "2026–27")
+ELECTION_YEAR = os.environ.get("ELECTION_YEAR", "")
+MEET_WHEN = os.environ.get("MEET_WHEN", "")
+TERM_LABEL = os.environ.get("TERM_LABEL", "")
+
+def election_label():
+    return f"Alumni Meet {ELECTION_YEAR}".strip()
 # Fraud reports: set CONTACT_NUMBER (e.g. +91 98XXX XXXXX) to show a call link
 # on the endorsement card ("Someone endorsed in your name? Call …").
 CONTACT_NUMBER = os.environ.get("CONTACT_NUMBER", "").strip()
@@ -145,12 +148,12 @@ def verified_uid_or_error():
 CHAIRMAN = {"title": "Chairman", "held_by": "Principal or his appointee",
             "desc": "Ex-officio chair. Not elected here."}
 
-# Public plan shown on the homepage so any visitor understands the road to Nov 2027.
+# Public plan, kept dateless until the meet date is fixed.
 PLAN = [
-    {"phase": "1. Foundation", "when": "Sep – Dec 2026", "what": "Volunteers step forward: every batch gets 2 places per role, one person one role. The role list gets fixed once endorsements open."},
-    {"phase": "2. Build", "when": "Jan – Jun 2027", "what": "Directory, school premises layout & permissions, budget, sponsors, batch coordinators, save-the-date + WhatsApp updates."},
-    {"phase": "3. Execution", "when": "Jul – Oct 2027", "what": "Registrations, food, stay & travel help for outstation alumni, culture & sports program, mementos. Registration closes Oct 2027."},
-    {"phase": "4. Meet + Audit", "when": "Nov – Dec 2027", "what": "Alumni Meet Nov 2027, felicitations, AGM, accounts + directory published."},
+    {"phase": "1. Foundation", "when": "To start", "what": "Volunteers step forward: every batch gets 2 places per role, one person one role. The role list gets fixed once endorsements open."},
+    {"phase": "2. Build", "when": "Next", "what": "Directory, school premises layout & permissions, budget, sponsors, batch coordinators, save-the-date + WhatsApp updates."},
+    {"phase": "3. Execution", "when": "Then", "what": "Registrations, food, stay & travel help for outstation alumni, culture & sports program, mementos. Registrations close before the meet."},
+    {"phase": "4. Meet + Audit", "when": "Finally", "what": "The meet, felicitations, AGM, accounts + directory published."},
     {"phase": "Deciding ties", "when": "If equal", "what": "Most supporters wins the role. Same support? Whoever stepped forward first leads. Exact tie? Our Chairman decides."},
 ]
 ELECTED_NOW = ["Convener", "Co-Convener", "Operations Convener", "Registration & Outreach Convener", "Finance Convener", "Logistics Convener", "Programmes Convener", "Comms & PR Convener"]
@@ -589,7 +592,7 @@ def state():
     is_open = voting_open(conn)
     conn.close()
     return jsonify({
-        "election": f"Alumni Meet {ELECTION_YEAR}",
+        "election": election_label(),
         "year": ELECTION_YEAR,
         "meet_when": MEET_WHEN,
         "term": TERM_LABEL,
@@ -833,7 +836,7 @@ def _export_data():
     except Exception:
         votes, choices = [], []
     conn.close()
-    return {"exported_at": datetime.utcnow().isoformat(), "election": f"Alumni Meet {ELECTION_YEAR}",
+    return {"exported_at": datetime.utcnow().isoformat(), "election": election_label(),
             "year": ELECTION_YEAR, "meet_when": MEET_WHEN, "term": TERM_LABEL,
             "plan": PLAN, "offices": offices, "candidates": cands,
             "votes": votes, "choices": choices}

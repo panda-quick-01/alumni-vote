@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>St Peter's Alumni Meet 2027 — Volunteers for the organising committee</title>
+<title>St Peter's Alumni Meet — Volunteers for the organising committee</title>
 <style>
 :root{--bg:#000;--panel:#0A0A0A;--line:#232323;--txt:#F5F5F5;--mut:#A1A1AA;--r:12px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -108,9 +108,9 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <body>
 <div class="wrap">
 <header>
-<div class="badge" id="meetBadge"><i></i>St Peter's · Alumni Meet · Nov 2027</div>
+<div class="badge" id="meetBadge"><i></i>St Peter's · Alumni Meet</div>
 <div class="eyebrow">An open process everyone can trust</div>
-<h1>Who will organise our 2027 meet?</h1>
+<h1>Who will organise our meet?</h1>
 <p>Our school meet needs 7 volunteers. If you have the time and the heart, step forward below. Then we all endorse — so the final committee carries everyone's trust. Our Chairman is the Principal (not elected).</p>
 <div><a class="wa-btn" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">Follow updates on WhatsApp</a></div>
 </header>
@@ -197,7 +197,7 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 
 <h2 class="sec-title">Step 3 — Our committee</h2>
 <p class="sec-sub">The names with the community's backing. One person per role.</p>
-<div class="card" id="commCard" style="display:none;margin-bottom:12px"><h2>Your 2027 committee</h2><ul class="names" id="commList"></ul><p class="sec-sub" style="margin:10px 0 0">Same support? Whoever stepped forward first leads. Exact tie? Our Chairman decides.</p></div>
+<div class="card" id="commCard" style="display:none;margin-bottom:12px"><h2>Your committee</h2><ul class="names" id="commList"></ul><p class="sec-sub" style="margin:10px 0 0">Same support? Whoever stepped forward first leads. Exact tie? Our Chairman decides.</p></div>
 <div class="card">
 <div class="row"><select id="resOffice" onchange="renderRes()"><option value="">All roles</option></select><input id="resSearch" type="search" placeholder="Search name…" oninput="renderRes()"/></div>
 </div>
@@ -230,14 +230,14 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 </div>
 </div>
 
-<details><summary>Full plan to November 2027</summary>
+<details><summary>Full plan</summary>
 <div id="planGrid" class="timeline"></div>
 <div id="freezeNote" class="note ok"></div>
 <div style="margin-top:10px"><div class="meta">Roles we fill together</div><div id="electList"></div></div>
-<div style="margin-top:6px"><div class="meta">Other teams (formed in 2027)</div><div id="cooptList"></div></div>
+<div style="margin-top:6px"><div class="meta">Other teams (formed later)</div><div id="cooptList"></div></div>
 </details>
 
-<footer>Built with ❤️ for St Peter's · Alumni Meet Nov 2027 · <a class="wa-link" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">WhatsApp updates</a></footer>
+<footer>Built with ❤️ for St Peter's · Alumni Meet · <a class="wa-link" href="https://www.whatsapp.com/channel/0029Vb916nv002TBaxKfpD0l" target="_blank" rel="noopener">WhatsApp updates</a></footer>
 </div>
 <div id="toast" class="toast"></div>
 <script>
@@ -355,7 +355,7 @@ async function load(){
 try{
 const s=await api('/api/state');
 OFFICES=s.offices;CANDS=s.candidates;RESULTS=s.results||{};RECENT=s.recent||[];META=s;
-if(s.election){document.getElementById('meetBadge').innerHTML=`<i></i>St Peter's · ${esc(s.election)} · ${esc(s.meet_when||'Nov 2027')}`;}
+if(s.election){const bits=["St Peter's",s.election,s.meet_when||''].filter(x=>x);document.getElementById('meetBadge').innerHTML=`<i></i>${esc(bits.join(' · '))}`;}
 document.getElementById('tVotes').textContent=s.total_votes;
 document.getElementById('tCands').textContent=Object.values(s.candidates).reduce((a,b)=>a+b.length,0);
 document.getElementById('tOff').textContent=s.offices.length;
@@ -548,7 +548,7 @@ try{
 const r=await fetch('/api/export',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK})});
 const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Export failed');
 const blob=new Blob([JSON.stringify(j,null,2)],{type:'application/json'});
-const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='st-peters-2027-export.json';a.click();
+const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='st-peters-export.json';a.click();
 setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 toast('Downloaded');
 }catch(e){toast(e.message);if(/password|admin/i.test(e.message))adminLock();}
