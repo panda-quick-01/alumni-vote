@@ -90,6 +90,7 @@ if not FIREBASE_WEB_CONFIG:
         "storageBucket": _env_multi("FIREBASE_STORAGE_BUCKET", "Firebase_storageBucket"),
         "messagingSenderId": _env_multi("FIREBASE_MESSAGING_SENDER_ID", "Firebase_messagingSenderId"),
         "appId": _env_multi("FIREBASE_APP_ID", "Firebase_appId"),
+        "measurementId": _env_multi("FIREBASE_MEASUREMENT_ID", "Firebase_measurementId"),
     }
     if _parts["apiKey"] and _parts["authDomain"] and _parts["projectId"]:
         FIREBASE_WEB_CONFIG = {k: v for k, v in _parts.items() if v}
