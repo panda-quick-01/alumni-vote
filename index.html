@@ -78,7 +78,19 @@ button{cursor:pointer;border:0;border-radius:10px;padding:12px 14px;font-weight:
 .resrow:last-child{border:0}
 .wa-btn{display:inline-block;background:#25D366;color:#000;font-weight:700;font-size:14px;padding:12px 20px;border-radius:99px;text-decoration:none;min-height:44px;margin-top:12px}
 .wa-link{color:#25D366;font-weight:600}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:#000;padding:13px 18px;border-radius:12px;font-weight:600;display:none;max-width:92vw;z-index:9;font-size:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:#000;padding:13px 18px;border-radius:12px;font-weight:600;display:none;max-width:92vw;z-index:99;font-size:14px;animation:rise .25s ease}
+.otp{display:flex;gap:8px;margin-top:6px}
+.otpBox{width:48px;height:58px;text-align:center;font-size:24px;font-weight:700;padding:0;border-radius:12px;border:1px solid var(--line);background:#000;color:#fff;flex:1;min-height:58px}
+.otpBox:focus{border-color:#fff;outline:none;box-shadow:0 0 0 2px #fff}
+.otpBox.full{border-color:#25D366}
+.otp.shake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}
+#authModal .card{animation:rise .28s ease}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.55;cursor:wait;transform:none}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 footer{color:var(--mut);font-size:12px;margin-top:30px;text-align:center}
 .meta{font-size:12px;color:var(--mut)}
 details{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:12px;background:var(--panel)}
@@ -125,9 +137,16 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <input id="fbPhone" type="tel" inputmode="tel" placeholder="+91 …" autocomplete="off"/>
 <div class="row"><button class="btn-sec" id="fbSendBtn" onclick="fbSendCode()">Send code by SMS</button></div>
 <div id="fbCodeRow" style="display:none">
-<label for="fbCode">6-digit code from the SMS</label>
-<input id="fbCode" type="text" inputmode="numeric" maxlength="6" placeholder="••••••" autocomplete="off"/>
-<div class="row"><button class="btn-pri" onclick="fbConfirmCode()">Confirm</button></div>
+<label>6-digit code from the SMS</label>
+<div class="otp" id="otpRow">
+<input class="otpBox" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code"/>
+<input class="otpBox" type="text" inputmode="numeric" maxlength="1"/>
+<input class="otpBox" type="text" inputmode="numeric" maxlength="1"/>
+<input class="otpBox" type="text" inputmode="numeric" maxlength="1"/>
+<input class="otpBox" type="text" inputmode="numeric" maxlength="1"/>
+<input class="otpBox" type="text" inputmode="numeric" maxlength="1"/>
+</div>
+<div class="row"><button class="btn-pri" id="fbConfirmBtn" onclick="fbConfirmCode()">Confirm</button></div>
 </div>
 <div class="hintline" id="fbHint" style="color:var(--mut)"></div>
 </div>
@@ -256,16 +275,48 @@ const a=await fbAuth();
 a.onAuthStateChanged(async u=>{if(u){FB_USER=u;try{FB_TOKEN=await u.getIdToken(true);}catch(e){try{FB_TOKEN=await u.getIdToken();}catch(_){}}}});
 }catch(e){}
 }
+async function fbRecap(){
+if(window._fbRecap)return window._fbRecap;
+const a=await fbAuth();
+window._fbRecap=new firebase.auth.RecaptchaVerifier('fbSendBtn',{size:'invisible'});
+return window._fbRecap;
+}
+function otpCode(){return [...document.querySelectorAll('.otpBox')].map(i=>i.value).join('');}
+function otpClear(){document.querySelectorAll('.otpBox').forEach(i=>{i.value='';i.classList.remove('full');});}
+function otpWire(){
+const boxes=[...document.querySelectorAll('.otpBox')];
+boxes.forEach((el,i)=>{
+el.addEventListener('input',()=>{
+el.value=el.value.replace(/\D/g,'').slice(0,1);
+el.classList.toggle('full',!!el.value);
+if(el.value&&i<boxes.length-1)boxes[i+1].focus();
+});
+el.addEventListener('keydown',e=>{
+if(e.key==='Backspace'&&!el.value&&i>0)boxes[i-1].focus();
+if(e.key==='Enter')fbConfirmCode();
+});
+el.addEventListener('paste',e=>{
+e.preventDefault();
+const d=((e.clipboardData||window.clipboardData).getData('text')||'').replace(/\D/g,'').slice(0,6);
+d.split('').forEach((ch,k)=>{if(boxes[k]){boxes[k].value=ch;boxes[k].classList.add('full');}});
+if(d.length)boxes[Math.min(d.length,5)].focus();
+});
+});
+}
 async function fbSendCode(){
+const btn=document.getElementById('fbSendBtn');
 const to=fbE164(document.getElementById('fbPhone').value);
 if(!to)return toast('Please type your mobile number');
-document.getElementById('fbHint').textContent='Sending SMS…';
+btn.disabled=true;btn.innerHTML='<span class="spin">◌</span> Sending…';
+document.getElementById('fbHint').textContent='';
 try{
 const a=await fbAuth();
-if(!window._fbRecap)window._fbRecap=new firebase.auth.RecaptchaVerifier('fbSendBtn',{size:'invisible'});
-FB_CONFIRM=await a.signInWithPhoneNumber(to,window._fbRecap);
+const recap=await fbRecap();
+FB_CONFIRM=await a.signInWithPhoneNumber(to,recap);
+otpClear();
 document.getElementById('fbCodeRow').style.display='block';
 document.getElementById('fbHint').textContent='Code sent. It can take a minute to arrive.';
+document.querySelector('.otpBox').focus();
 }catch(e){
 const code=(e&&e.code)||'unknown-error';
 const raw=(e&&e.message)||'';
@@ -277,18 +328,21 @@ const plain={'auth/operation-not-allowed':'Phone login is not switched on in Fir
 'auth/too-many-requests':'Too many tries — wait a few minutes and retry.'}[code]||raw;
 document.getElementById('fbHint').textContent='SMS failed ('+code+'). '+plain+' — please tell the committee this exact line.';
 toast('Could not send SMS ('+code+')');
-if(window._fbRecap){try{window._fbRecap.clear()}catch(_){}window._fbRecap=null;}}
+}finally{btn.disabled=false;btn.textContent='Send code by SMS';}
 }
 async function fbConfirmCode(){
-const code=(document.getElementById('fbCode').value||'').trim();
-if(code.length<4)return toast('Please type the 6-digit code');
+const btn=document.getElementById('fbConfirmBtn');
+const code=otpCode();
+if(code.length<6){document.getElementById('otpRow').classList.remove('shake');void document.getElementById('otpRow').offsetWidth;document.getElementById('otpRow').classList.add('shake');return toast('Please type all 6 digits');}
+btn.disabled=true;btn.innerHTML='<span class="spin">◌</span> Checking…';
 try{
 const r=await FB_CONFIRM.confirm(code);
 FB_USER=r.user;FB_TOKEN=await FB_USER.getIdToken();
 closeAuthModal();
 toast('Number verified. Thank you!');
 const p=PENDING;PENDING=null;if(p)p();
-}catch(e){toast('Wrong code — please try again.');}
+}catch(e){document.getElementById('otpRow').classList.remove('shake');void document.getElementById('otpRow').offsetWidth;document.getElementById('otpRow').classList.add('shake');toast('Wrong code — please try again.');
+}finally{btn.disabled=false;btn.textContent='Confirm';}
 }
 async function load(){
 try{
@@ -514,6 +568,8 @@ document.getElementById('standName').addEventListener('keydown',e=>{if(e.key==='
 document.getElementById('standBatch').addEventListener('keydown',e=>{if(e.key==='Enter')stand()});
 document.getElementById('voteWritein').addEventListener('input',e=>{const o=curOffice();if(!o)return;if(e.target.value.trim()&&sel[o.slug])delete sel[o.slug];});
 document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')adminUnlock()});
+document.getElementById('fbPhone').addEventListener('keydown',e=>{if(e.key==='Enter')fbSendCode();});
+otpWire();
 load();setInterval(load,9000);
 </script>
 </body></html>
