@@ -71,33 +71,20 @@ CONTACT_LABEL = os.environ.get("CONTACT_LABEL", "the committee").strip() or "the
 # every volunteer/voter verifies their mobile by SMS code, and one verified
 # number gets exactly one endorsement. Off by default (name-based flow).
 AUTH_REQUIRED = os.environ.get("AUTH_REQUIRED", "0") == "1"
-try:
-    FIREBASE_WEB_CONFIG = json.loads(os.environ.get("FIREBASE_WEB_CONFIG", "") or "null")
-except Exception:
+# Firebase web config — read straight from .env, exact names, no variants.
+FIREBASE_WEB_CONFIG = {
+    "apiKey": os.environ.get("Firebase_apiKey", "").strip(),
+    "authDomain": os.environ.get("Firebase_authDomain", "").strip(),
+    "projectId": os.environ.get("Firebase_projectId", "").strip(),
+    "storageBucket": os.environ.get("Firebase_storageBucket", "").strip(),
+    "messagingSenderId": os.environ.get("Firebase_messagingSenderId", "").strip(),
+    "appId": os.environ.get("Firebase_appId", "").strip(),
+    "measurementId": os.environ.get("Firebase_measurementId", "").strip(),
+}
+FIREBASE_WEB_CONFIG = {k: v for k, v in FIREBASE_WEB_CONFIG.items() if v}
+if not (FIREBASE_WEB_CONFIG.get("apiKey") and FIREBASE_WEB_CONFIG.get("authDomain")
+        and FIREBASE_WEB_CONFIG.get("projectId")):
     FIREBASE_WEB_CONFIG = None
-if not FIREBASE_WEB_CONFIG:
-    # Also accept individual keys in any casing (FIREBASE_API_KEY,
-    # Firebase_apiKey, FIREBASE_apiKey, …).
-    def _env_multi(*names):
-        want = [re.sub(r"[^A-Z0-9]", "", n.upper()) for n in names]
-        table = {}
-        for k, v in os.environ.items():
-            table.setdefault(re.sub(r"[^A-Z0-9]", "", k.upper()), (v or "").strip())
-        for w in want:
-            if table.get(w):
-                return table[w]
-        return ""
-    _parts = {
-        "apiKey": _env_multi("FIREBASE_API_KEY", "Firebase_apiKey", "FIREBASE_apiKey"),
-        "authDomain": _env_multi("FIREBASE_AUTH_DOMAIN", "Firebase_authDomain", "FIREBASE_authDomain"),
-        "projectId": _env_multi("FIREBASE_PROJECT_ID", "Firebase_projectId", "FIREBASE_projectId"),
-        "storageBucket": _env_multi("FIREBASE_STORAGE_BUCKET", "Firebase_storageBucket", "FIREBASE_storageBucket"),
-        "messagingSenderId": _env_multi("FIREBASE_MESSAGING_SENDER_ID", "Firebase_messagingSenderId", "FIREBASE_messagingSenderId"),
-        "appId": _env_multi("FIREBASE_APP_ID", "Firebase_appId", "FIREBASE_appId"),
-        "measurementId": _env_multi("FIREBASE_MEASUREMENT_ID", "Firebase_measurementId", "FIREBASE_measurementId"),
-    }
-    if _parts["apiKey"] and _parts["authDomain"] and _parts["projectId"]:
-        FIREBASE_WEB_CONFIG = {k: v for k, v in _parts.items() if v}
 FIREBASE_SERVICE_JSON = os.environ.get("FIREBASE_SERVICE_JSON", "").strip()
 if not FIREBASE_SERVICE_JSON:
     # Local convenience: point FIREBASE_SERVICE_FILE at the downloaded key file.
