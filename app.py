@@ -76,21 +76,25 @@ try:
 except Exception:
     FIREBASE_WEB_CONFIG = None
 if not FIREBASE_WEB_CONFIG:
-    # Also accept individual keys (either UPPER_CASE or Firebase_camelCase).
+    # Also accept individual keys in any casing (FIREBASE_API_KEY,
+    # Firebase_apiKey, FIREBASE_apiKey, …).
     def _env_multi(*names):
-        for n in names:
-            v = os.environ.get(n, "").strip()
-            if v:
-                return v
+        want = [re.sub(r"[^A-Z0-9]", "", n.upper()) for n in names]
+        table = {}
+        for k, v in os.environ.items():
+            table.setdefault(re.sub(r"[^A-Z0-9]", "", k.upper()), (v or "").strip())
+        for w in want:
+            if table.get(w):
+                return table[w]
         return ""
     _parts = {
-        "apiKey": _env_multi("FIREBASE_API_KEY", "Firebase_apiKey"),
-        "authDomain": _env_multi("FIREBASE_AUTH_DOMAIN", "Firebase_authDomain"),
-        "projectId": _env_multi("FIREBASE_PROJECT_ID", "Firebase_projectId"),
-        "storageBucket": _env_multi("FIREBASE_STORAGE_BUCKET", "Firebase_storageBucket"),
-        "messagingSenderId": _env_multi("FIREBASE_MESSAGING_SENDER_ID", "Firebase_messagingSenderId"),
-        "appId": _env_multi("FIREBASE_APP_ID", "Firebase_appId"),
-        "measurementId": _env_multi("FIREBASE_MEASUREMENT_ID", "Firebase_measurementId"),
+        "apiKey": _env_multi("FIREBASE_API_KEY", "Firebase_apiKey", "FIREBASE_apiKey"),
+        "authDomain": _env_multi("FIREBASE_AUTH_DOMAIN", "Firebase_authDomain", "FIREBASE_authDomain"),
+        "projectId": _env_multi("FIREBASE_PROJECT_ID", "Firebase_projectId", "FIREBASE_projectId"),
+        "storageBucket": _env_multi("FIREBASE_STORAGE_BUCKET", "Firebase_storageBucket", "FIREBASE_storageBucket"),
+        "messagingSenderId": _env_multi("FIREBASE_MESSAGING_SENDER_ID", "Firebase_messagingSenderId", "FIREBASE_messagingSenderId"),
+        "appId": _env_multi("FIREBASE_APP_ID", "Firebase_appId", "FIREBASE_appId"),
+        "measurementId": _env_multi("FIREBASE_MEASUREMENT_ID", "Firebase_measurementId", "FIREBASE_measurementId"),
     }
     if _parts["apiKey"] and _parts["authDomain"] and _parts["projectId"]:
         FIREBASE_WEB_CONFIG = {k: v for k, v in _parts.items() if v}
