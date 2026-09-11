@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
 import sqlite3
+import json
 import os
 import re
 import time
@@ -18,8 +19,10 @@ def security_headers(resp):
     resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     resp.headers["Content-Security-Policy"] = (
         "default-src 'self'; style-src 'self' 'unsafe-inline'; "
-        "script-src 'self' 'unsafe-inline'; img-src 'self' data:; "
-        "connect-src 'self'; frame-ancestors 'none'")
+        "script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://www.google.com; "
+        "img-src 'self' data:; "
+        "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; "
+        "frame-src https://www.google.com https://*.firebaseapp.com; frame-ancestors 'none'")
     # Never let browsers (especially mobiles) cache the page or API data:
     # every visit must fetch the latest version. No hard-refresh needed.
     p = request.path or "/"
@@ -64,6 +67,53 @@ TERM_LABEL = os.environ.get("TERM_LABEL", "2026–27")
 # on the endorsement card ("Someone endorsed in your name? Call …").
 CONTACT_NUMBER = os.environ.get("CONTACT_NUMBER", "").strip()
 CONTACT_LABEL = os.environ.get("CONTACT_LABEL", "the committee").strip() or "the committee"
+# Firebase phone login (optional). When AUTH_REQUIRED=1 plus both configs below,
+# every volunteer/voter verifies their mobile by SMS code, and one verified
+# number gets exactly one endorsement. Off by default (name-based flow).
+AUTH_REQUIRED = os.environ.get("AUTH_REQUIRED", "0") == "1"
+try:
+    FIREBASE_WEB_CONFIG = json.loads(os.environ.get("FIREBASE_WEB_CONFIG", "") or "null")
+except Exception:
+    FIREBASE_WEB_CONFIG = None
+FIREBASE_SERVICE_JSON = os.environ.get("FIREBASE_SERVICE_JSON", "").strip()
+
+def auth_required():
+    return AUTH_REQUIRED and bool(FIREBASE_WEB_CONFIG) and bool(FIREBASE_SERVICE_JSON)
+
+_fb_app = None
+
+def firebase_uid_from_token(token):
+    """Verify a Firebase ID token, return the user's uid. Raises on failure."""
+    global _fb_app
+    import firebase_admin
+    from firebase_admin import auth as fb_auth, credentials
+    if _fb_app is None:
+        _fb_app = firebase_admin.initialize_app(
+            credentials.Certificate(json.loads(FIREBASE_SERVICE_JSON)))
+    return fb_auth.verify_id_token(token)["uid"]
+
+def verified_uid_or_error():
+    """If auth is required, verify Bearer token (or committee admin token).
+    Returns (uid, None) or ('', error_resp). Admin override yields uid ''."""
+    if not auth_required():
+        return "", None
+    if admin_ok(request.headers.get("X-Admin-Token")) and ADMIN_TOKEN:
+        return "", None
+    try:
+        body_tok = (request.get_json(force=True, silent=True) or {}).get("token")
+    except Exception:
+        body_tok = None
+    if ADMIN_TOKEN and body_tok and body_tok == ADMIN_TOKEN:
+        return "", None
+    tok = request.headers.get("Authorization") or ""
+    if tok.startswith("Bearer "):
+        tok = tok[7:].strip()
+    if not tok:
+        return "", (jsonify({"error": "Please verify your mobile number first."}), 403)
+    try:
+        return firebase_uid_from_token(tok), None
+    except Exception:
+        return "", (jsonify({"error": "Verification expired — please verify your number again."}), 403)
 
 # Chairman is ex-officio (Principal or his appointee) — never on the ballot.
 CHAIRMAN = {"title": "Chairman", "held_by": "Principal or his appointee",
@@ -155,6 +205,28 @@ def init_db():
         cols0 = [r["name"] for r in conn.execute("PRAGMA table_info(candidates)")]
         if "phone" not in cols0:
             conn.execute("ALTER TABLE candidates ADD COLUMN phone TEXT NOT NULL DEFAULT ''")
+            conn.commit()
+    except Exception:
+        pass
+    # One verified identity, one endorsement: key ballots by Firebase uid.
+    # Drops the old voter-name uniqueness (two "Ravi"s may exist; uid stays unique).
+    try:
+        vcols = [r["name"] for r in conn.execute("PRAGMA table_info(votes_new)")]
+        if "firebase_uid" not in vcols:
+            conn.executescript("""
+            CREATE TABLE votes_uid_tmp (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                voter TEXT NOT NULL COLLATE NOCASE,
+                firebase_uid TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL
+            );
+            INSERT INTO votes_uid_tmp (id, voter, firebase_uid, created_at)
+                SELECT id, voter, '', created_at FROM votes_new;
+            DROP TABLE votes_new;
+            ALTER TABLE votes_uid_tmp RENAME TO votes_new;
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_votes_uid
+                ON votes_new(firebase_uid) WHERE firebase_uid != '';
+            """)
             conn.commit()
     except Exception:
         pass
@@ -336,6 +408,9 @@ def create_office():
         emoji = emoji[:8]
     if len(desc) > 120:
         desc = desc[:120]
+    _, auth_err = verified_uid_or_error()
+    if auth_err:
+        return auth_err
     conn = get_db()
     # Fairness freeze: adding an office after ballots are cast would make
     # old ballots incomplete. Block it once voting has started.
@@ -457,6 +532,8 @@ def state():
         "voting_open": is_open,
         "committee": committee,
         "admin_enabled": bool(ADMIN_TOKEN),
+        "auth_required": auth_required(),
+        "firebase": FIREBASE_WEB_CONFIG,
         "contact": {"number": CONTACT_NUMBER, "label": CONTACT_LABEL} if CONTACT_NUMBER else None,
         "offices": offices,
         "candidates": cands,
@@ -475,6 +552,9 @@ def add_candidate():
         return jsonify({"error": "Please pick a job first"}), 400
     if not name or len(name) < 2 or len(name) > 60:
         return jsonify({"error": "Name must be 2-60 characters"}), 400
+    _, auth_err = verified_uid_or_error()
+    if auth_err:
+        return auth_err
     conn = get_db()
     # New race after voting started would orphan old ballots — block it.
     # Adding names to an existing office is still allowed (nominations).
@@ -548,7 +628,22 @@ def vote():
     conn = get_db()
     if not voting_open(conn):
         conn.close()
-        return jsonify({"error": "Voting has not opened yet — we are still collecting names. Please come back when voting opens."}), 403
+        return jsonify({"error": "Endorsements have not opened yet — we are still collecting volunteers. Please come back soon."}), 403
+    uid, auth_err = verified_uid_or_error()
+    if auth_err:
+        conn.close()
+        return auth_err
+    if uid:
+        dup = conn.execute("SELECT id FROM votes_new WHERE firebase_uid=?", (uid,)).fetchone()
+        if dup:
+            conn.close()
+            return jsonify({"error": "This mobile number has already endorsed — one person, one endorsement."}), 409
+    else:
+        dup = conn.execute("SELECT id FROM votes_new WHERE voter=? COLLATE NOCASE",
+                           (voter,)).fetchone()
+        if dup:
+            conn.close()
+            return jsonify({"error": f"'{voter}' has already endorsed — one person, one endorsement."}), 409
     offices_now = get_offices(conn)
     cmap_now = custom_map(conn)
     required = [o["slug"] for o in offices_now]
@@ -611,8 +706,8 @@ def vote():
                 return jsonify({"error": f"That name is not listed for {pt(race)}"}), 400
 
         try:
-            cur = conn.execute("INSERT INTO votes_new (voter, created_at) VALUES (?,?)",
-                               (voter, datetime.utcnow().isoformat()))
+            cur = conn.execute("INSERT INTO votes_new (voter, firebase_uid, created_at) VALUES (?,?,?)",
+                               (voter, uid, datetime.utcnow().isoformat()))
             vid = cur.lastrowid
             for race, cid in resolved.items():
                 conn.execute("INSERT INTO vote_choices (vote_id, race, candidate_id) VALUES (?,?,?)",
@@ -620,7 +715,7 @@ def vote():
             conn.commit()
         except sqlite3.IntegrityError:
             conn.rollback()
-            return jsonify({"error": f"'{voter}' has already voted. One vote per person."}), 409
+            return jsonify({"error": "This has already been counted — one person, one endorsement."}), 409
     finally:
         conn.close()
     return jsonify({"ok": True})
