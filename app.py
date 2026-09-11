@@ -95,6 +95,16 @@ if not FIREBASE_WEB_CONFIG:
     if _parts["apiKey"] and _parts["authDomain"] and _parts["projectId"]:
         FIREBASE_WEB_CONFIG = {k: v for k, v in _parts.items() if v}
 FIREBASE_SERVICE_JSON = os.environ.get("FIREBASE_SERVICE_JSON", "").strip()
+if not FIREBASE_SERVICE_JSON:
+    # Local convenience: point FIREBASE_SERVICE_FILE at the downloaded key file.
+    # (Live servers can't use files — set FIREBASE_SERVICE_JSON in env instead.)
+    _svc_file = os.environ.get("FIREBASE_SERVICE_FILE", "").strip()
+    if _svc_file and os.path.isfile(_svc_file):
+        try:
+            with open(_svc_file, encoding="utf-8") as _fh:
+                FIREBASE_SERVICE_JSON = _fh.read().strip()
+        except Exception:
+            pass
 
 def auth_required():
     return AUTH_REQUIRED and bool(FIREBASE_WEB_CONFIG) and bool(FIREBASE_SERVICE_JSON)

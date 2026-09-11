@@ -3,3 +3,7 @@ data/
 *.db
 __pycache__/
 .venv/
+# Firebase service-account private keys — NEVER commit
+*firebase-adminsdk*.json
+*service-account*.json
+FIREBASE_SERVICE_JSON*
