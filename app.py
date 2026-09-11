@@ -75,6 +75,24 @@ try:
     FIREBASE_WEB_CONFIG = json.loads(os.environ.get("FIREBASE_WEB_CONFIG", "") or "null")
 except Exception:
     FIREBASE_WEB_CONFIG = None
+if not FIREBASE_WEB_CONFIG:
+    # Also accept individual keys (either UPPER_CASE or Firebase_camelCase).
+    def _env_multi(*names):
+        for n in names:
+            v = os.environ.get(n, "").strip()
+            if v:
+                return v
+        return ""
+    _parts = {
+        "apiKey": _env_multi("FIREBASE_API_KEY", "Firebase_apiKey"),
+        "authDomain": _env_multi("FIREBASE_AUTH_DOMAIN", "Firebase_authDomain"),
+        "projectId": _env_multi("FIREBASE_PROJECT_ID", "Firebase_projectId"),
+        "storageBucket": _env_multi("FIREBASE_STORAGE_BUCKET", "Firebase_storageBucket"),
+        "messagingSenderId": _env_multi("FIREBASE_MESSAGING_SENDER_ID", "Firebase_messagingSenderId"),
+        "appId": _env_multi("FIREBASE_APP_ID", "Firebase_appId"),
+    }
+    if _parts["apiKey"] and _parts["authDomain"] and _parts["projectId"]:
+        FIREBASE_WEB_CONFIG = {k: v for k, v in _parts.items() if v}
 FIREBASE_SERVICE_JSON = os.environ.get("FIREBASE_SERVICE_JSON", "").strip()
 
 def auth_required():
