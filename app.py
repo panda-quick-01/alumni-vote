@@ -71,15 +71,21 @@ CONTACT_LABEL = os.environ.get("CONTACT_LABEL", "the committee").strip() or "the
 # every volunteer/voter verifies their mobile by SMS code, and one verified
 # number gets exactly one endorsement. Off by default (name-based flow).
 AUTH_REQUIRED = os.environ.get("AUTH_REQUIRED", "0") == "1"
-# Firebase web config — read straight from .env, exact names, no variants.
+# Firebase web config — read from env, whatever letter-case is used.
+def _fbenv(*names):
+    want = {n.upper() for n in names}
+    for k, v in os.environ.items():
+        if k.upper() in want and (v or "").strip():
+            return v.strip()
+    return ""
 FIREBASE_WEB_CONFIG = {
-    "apiKey": os.environ.get("Firebase_apiKey", "").strip(),
-    "authDomain": os.environ.get("Firebase_authDomain", "").strip(),
-    "projectId": os.environ.get("Firebase_projectId", "").strip(),
-    "storageBucket": os.environ.get("Firebase_storageBucket", "").strip(),
-    "messagingSenderId": os.environ.get("Firebase_messagingSenderId", "").strip(),
-    "appId": os.environ.get("Firebase_appId", "").strip(),
-    "measurementId": os.environ.get("Firebase_measurementId", "").strip(),
+    "apiKey": _fbenv("FIREBASE_APIKEY", "FIREBASE_API_KEY"),
+    "authDomain": _fbenv("FIREBASE_AUTHDOMAIN", "FIREBASE_AUTH_DOMAIN"),
+    "projectId": _fbenv("FIREBASE_PROJECTID", "FIREBASE_PROJECT_ID"),
+    "storageBucket": _fbenv("FIREBASE_STORAGEBUCKET", "FIREBASE_STORAGE_BUCKET"),
+    "messagingSenderId": _fbenv("FIREBASE_MESSAGINGSENDERID", "FIREBASE_MESSAGING_SENDER_ID"),
+    "appId": _fbenv("FIREBASE_APPID", "FIREBASE_APP_ID"),
+    "measurementId": _fbenv("FIREBASE_MEASUREMENTID", "FIREBASE_MEASUREMENT_ID"),
 }
 FIREBASE_WEB_CONFIG = {k: v for k, v in FIREBASE_WEB_CONFIG.items() if v}
 if not (FIREBASE_WEB_CONFIG.get("apiKey") and FIREBASE_WEB_CONFIG.get("authDomain")
