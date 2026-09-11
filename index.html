@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>St Peter's Alumni Meet — Volunteers for the organising committee</title>
 <style>
-:root{--bg:#000;--panel:#0A0A0A;--line:#232323;--txt:#F5F5F5;--mut:#A1A1AA;--r:12px}
+:root{--bg:#000;--panel:#0A0A0A;--line:#232323;--txt:#F5F5F5;--mut:#A1A1AA;--soft:#D4D4D8;--inset:#000;--rowline:#141414;--selbg:#131313;--dimbtn:#18181B;--barbg:#1c1c1e;--accbg:#fff;--accfg:#000;--ok:#86efac;--warn:#fbbf24;--r:12px}
+html{color-scheme:dark}
+html[data-theme="light"]{--bg:#FAFAF9;--panel:#fff;--line:#E4E4E7;--txt:#09090B;--mut:#71717A;--soft:#3F3F46;--inset:#F4F4F5;--rowline:#E4E4E7;--selbg:#EDEDEF;--dimbtn:#F4F4F5;--barbg:#E4E4E7;--accbg:#09090B;--accfg:#FAFAF9;--ok:#15803D;--warn:#B45309;color-scheme:light}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{font-size:16px}
 body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;line-height:1.5}
@@ -16,7 +18,7 @@ header h1{margin:0;font-size:clamp(28px,7vw,44px);line-height:1.05;letter-spacin
 header p{color:var(--mut);margin:10px 0 0;font-size:15px;max-width:34rem}
 .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
 .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:12px;color:var(--mut);margin-bottom:14px;background:var(--panel)}
-.badge i{width:6px;height:6px;border-radius:99px;background:#fff;display:inline-block}
+.badge i{width:6px;height:6px;border-radius:99px;background:var(--txt);display:inline-block}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:16px 0}
 .stats div{background:var(--panel);padding:12px 8px;text-align:center}
 .stats b{display:block;font-size:19px}
@@ -32,56 +34,58 @@ header p{color:var(--mut);margin:10px 0 0;font-size:15px;max-width:34rem}
 @media(min-width:760px){.steps3{grid-template-columns:1fr 1fr 1fr}}
 .step3{border:1px solid var(--line);border-radius:10px;padding:12px;background:#000}
 .step3 b{display:block;font-size:14px}
-.step3 .n{display:inline-flex;width:22px;height:22px;border-radius:99px;background:#fff;color:#000;font-size:12px;font-weight:800;align-items:center;justify-content:center;margin-bottom:6px}
-.step3 p{margin:4px 0 0;font-size:13px;color:#D4D4D8}
-input[type=text],input[type=search],input[type=password],input[type=number],input[type=tel],select{width:100%;padding:13px 12px;border-radius:10px;border:1px solid var(--line);background:#000;color:#fff;font-size:16px;min-height:48px}
-input::placeholder{color:#52525B}
-input:focus,select:focus,button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.step3 .n{display:inline-flex;width:22px;height:22px;border-radius:99px;background:var(--accbg);color:var(--accfg);font-size:12px;font-weight:800;align-items:center;justify-content:center;margin-bottom:6px}
+.step3 p{margin:4px 0 0;font-size:13px;color:var(--soft)}
+input[type=text],input[type=search],input[type=password],input[type=number],input[type=tel],select{width:100%;padding:13px 12px;border-radius:10px;border:1px solid var(--line);background:var(--inset);color:var(--txt);font-size:16px;min-height:48px}
+input::placeholder{color:var(--mut)}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--txt);outline-offset:1px}
 label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
 .row{display:flex;gap:8px;margin-top:10px}
 .row input,.row select{flex:1;min-width:0}
 button{cursor:pointer;border:0;border-radius:10px;padding:12px 14px;font-weight:650;font-size:14px;min-height:48px}
-.btn-pri{background:#fff;color:#000;width:100%;margin-top:14px;font-size:17px;padding:15px}
+.btn-pri{background:var(--accbg);color:var(--accfg);width:100%;margin-top:14px;font-size:17px;padding:15px}
 .btn-pri:disabled{opacity:.45}
-.btn-sec{background:transparent;color:#fff;border:1px solid var(--line)}
-.btn-dim{background:#18181B;color:#fff;border:1px solid var(--line)}
-.hintline{font-size:14px;margin-top:10px;color:#E4E4E7}
-.hintline.full{color:#fbbf24}
-.hintline.free{color:#86efac}
+.btn-sec{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.btn-dim{background:var(--dimbtn);color:var(--txt);border:1px solid var(--line)}
+.hintline{font-size:14px;margin-top:10px;color:var(--soft)}
+.hintline.full{color:var(--warn)}
+.hintline.free{color:var(--ok)}
 .rules{margin:12px 0 0;padding:0;list-style:none}
-.rules li{font-size:14px;color:#D4D4D8;padding:7px 0 7px 28px;position:relative;border-top:1px solid #141414}
+.rules li{font-size:14px;color:var(--soft);padding:7px 0 7px 28px;position:relative;border-top:1px solid var(--rowline)}
 .rules li:first-child{border-top:0}
-.rules li:before{content:"✓";position:absolute;left:4px;color:#fff;font-weight:700}
-.note{border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;margin-top:12px;color:#D4D4D8;background:#000}
-.note.lock{border-color:#52525b;color:#fff}
+.rules li:before{content:"✓";position:absolute;left:4px;color:var(--txt);font-weight:700}
+.note{border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;margin-top:12px;color:var(--soft);background:var(--inset)}
+.note.lock{border-color:var(--mut);color:var(--txt)}
 .names{margin:10px 0 0;padding:0;list-style:none}
-.names li{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-top:1px solid #141414;font-size:15px}
+.nomrow{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--rowline);font-size:14px}
+.nomrow:last-child{border:0}
+.names li{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-top:1px solid var(--rowline);font-size:15px}
 .names li:first-child{border-top:0}
 .bt{font-size:12px;color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:2px 8px;white-space:nowrap;align-self:center}
 .count{border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:12px;color:var(--mut);white-space:nowrap}
 .jobhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .jobhead p{margin:4px 0 0;font-size:13px;color:var(--mut)}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:10px 2px 2px}
-.chipbtn{flex:none;background:transparent;color:#E4E4E7;border:1px solid var(--line);border-radius:99px;padding:10px 14px;font-size:14px;min-height:44px}
-.chipbtn.done{border-color:#fff}
-.chipbtn.cur{background:#fff;color:#000;border-color:#fff;font-weight:700}
-.candlist{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px;background:#000}
+.chipbtn{flex:none;background:transparent;color:var(--txt);border:1px solid var(--line);border-radius:99px;padding:10px 14px;font-size:14px;min-height:44px}
+.chipbtn.done{border-color:var(--txt)}
+.chipbtn.cur{background:var(--accbg);color:var(--accfg);border-color:var(--accbg);font-weight:700}
+.candlist{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px;background:var(--inset)}
 @media(min-width:900px){.candlist{max-height:380px}}
-.cand{display:flex;align-items:center;gap:12px;padding:13px 12px;border-bottom:1px solid #141414;cursor:pointer;font-size:15px;min-height:52px}
+.cand{display:flex;align-items:center;gap:12px;padding:13px 12px;border-bottom:1px solid var(--rowline);cursor:pointer;font-size:15px;min-height:52px}
 .cand:last-child{border-bottom:0}
-.cand.sel{background:#131313;box-shadow:inset 3px 0 0 #fff}
-.cand input{accent-color:#fff;width:20px;height:20px;flex:none}
+.cand.sel{background:var(--selbg);box-shadow:inset 3px 0 0 var(--txt)}
+.cand input{accent-color:var(--txt);width:20px;height:20px;flex:none}
 .cand .nm{flex:1;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar{height:4px;background:#1c1c1e;border-radius:99px;overflow:hidden;margin-top:8px}
-.bar i{display:block;height:100%;background:#fff}
-.resrow{padding:11px 0;border-bottom:1px solid #141414}
+.bar{height:4px;background:var(--barbg);border-radius:99px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--txt)}
+.resrow{padding:11px 0;border-bottom:1px solid var(--rowline)}
 .resrow:last-child{border:0}
 .wa-btn{display:inline-block;background:#25D366;color:#000;font-weight:700;font-size:14px;padding:12px 20px;border-radius:99px;text-decoration:none;min-height:44px;margin-top:12px}
 .wa-link{color:#25D366;font-weight:600}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:#000;padding:13px 18px;border-radius:12px;font-weight:600;display:none;max-width:92vw;z-index:99;font-size:14px;animation:rise .25s ease}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--accbg);color:var(--accfg);padding:13px 18px;border-radius:12px;font-weight:600;display:none;max-width:92vw;z-index:99;font-size:14px;animation:rise .25s ease}
 .otp{display:flex;gap:8px;margin-top:6px}
-.otpBox{width:48px;height:58px;text-align:center;font-size:24px;font-weight:700;padding:0;border-radius:12px;border:1px solid var(--line);background:#000;color:#fff;flex:1;min-height:58px}
-.otpBox:focus{border-color:#fff;outline:none;box-shadow:0 0 0 2px #fff}
+.otpBox{width:48px;height:58px;text-align:center;font-size:24px;font-weight:700;padding:0;border-radius:12px;border:1px solid var(--line);background:var(--inset);color:var(--txt);flex:1;min-height:58px}
+.otpBox:focus{border-color:var(--txt);outline:none;box-shadow:0 0 0 2px var(--txt)}
 .otpBox.full{border-color:#25D366}
 .otp.shake{animation:shake .35s ease}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}
@@ -97,18 +101,21 @@ details{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin
 details summary{cursor:pointer;font-weight:650;min-height:44px}
 .timeline{display:grid;gap:8px;margin-top:12px;grid-template-columns:1fr}
 @media(min-width:760px){.timeline{grid-template-columns:1fr 1fr}}
-.phase{border:1px solid var(--line);border-radius:10px;padding:12px;background:#000}
+.phase{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--inset)}
 .phase b{display:block;font-size:14px}
 .phase span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
-.phase p{margin:6px 0 0;font-size:14px;color:#D4D4D8}
-.tag{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:5px 11px;margin:6px 6px 0 0;font-size:13px;color:#E4E4E7;background:#000}
+.phase p{margin:6px 0 0;font-size:14px;color:var(--soft)}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:5px 11px;margin:6px 6px 0 0;font-size:13px;color:var(--txt);background:var(--inset)}
 .progress{font-size:13px;color:var(--mut);margin-top:8px}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-<div class="badge" id="meetBadge"><i></i>St Peter's · Alumni Meet</div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+<div class="badge" id="meetBadge" style="margin-bottom:0"><i></i>St Peter's · Alumni Meet</div>
+<button class="btn-dim" id="themeBtn" onclick="toggleTheme()" style="min-height:44px;white-space:nowrap">☀ Light</button>
+</div>
 <div class="eyebrow">An open process everyone can trust</div>
 <h1>Who will organise our meet?</h1>
 <p>Our school meet needs 7 volunteers. If you have the time and the heart, step forward below. Then we all endorse — so the final committee carries everyone's trust. Our Chairman is the Principal (not elected).</p>
@@ -193,7 +200,7 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <button id="voteBtn" class="btn-pri" onclick="submitVote()">Endorse</button>
 <p class="sec-sub" style="margin:10px 0 0">Tap one name for each role, then press the button. One person, one endorsement.</p>
 <div style="margin-top:8px"><a href="#" onclick="toggleReport();return false" style="font-size:13px;color:var(--mut)">See something wrong? Report it here.</a></div>
-<div id="reportBox" style="display:none;margin-top:10px;border-top:1px solid #141414;padding-top:10px">
+<div id="reportBox" style="display:none;margin-top:10px;border-top:1px solid var(--rowline);padding-top:10px">
 <label for="repKind">What happened?</label>
 <select id="repKind"><option value="name-misuse">Someone used my name</option><option value="duplicate-person">Same person twice (two numbers?)</option><option value="other">Something else</option></select>
 <label for="repDetail">Tell us briefly</label>
@@ -252,6 +259,9 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <div id="toast" class="toast"></div>
 <script>
 let OFFICES=[],CANDS={},RESULTS={},RECENT=[],META={};
+function applyTheme(t){document.documentElement.dataset.theme=(t==='light')?'light':'dark';try{localStorage.setItem('sp_theme',document.documentElement.dataset.theme);}catch(e){}const b=document.getElementById('themeBtn');if(b)b.textContent=document.documentElement.dataset.theme==='light'?'☾ Dark':'☀ Light';}
+function toggleTheme(){applyTheme(document.documentElement.dataset.theme==='light'?'dark':'light');}
+(function(){let t='';try{t=localStorage.getItem('sp_theme')||'';}catch(e){}if(t!=='light'&&t!=='dark')t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';document.documentElement.dataset.theme=t;})();
 let sel={},writeins={},voteIdx=0,voteLimit=30,lastVoteSlug='';
 const IS_ADMIN_ROUTE=window.location.pathname.replace(/\/+$/,'')!=='';
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3600)}
@@ -461,7 +471,7 @@ document.getElementById('voteList').innerHTML=(list.map(c=>{
 const b=batchOf(c.name);
 return `<label class="cand ${sel[o.slug]===c.id?'sel':''}"><input type="radio" name="${o.slug}" ${sel[o.slug]===c.id?'checked':''} onchange="pick('${o.slug}',${c.id})"/><span class="nm">${dispName(CANDS[o.slug]||[],c)}</span>${b?`<span class="bt">${esc(b)}</span>`:''}</label>`}).join('')||'<div style="padding:14px;color:var(--mut)">No match — type the name below.</div>')
 +(total>voteLimit?`<div style="padding:10px;text-align:center"><button class="btn-dim" onclick="voteLimit+=50;renderVoteList()">See more names (${total-voteLimit} more)</button></div>`:'')
-+((writeins[o.slug]||'').trim()?`<div style="padding:10px;color:#fff">Your added name: <b>${esc((writeins[o.slug]||'').trim())}</b> <a href="#" onclick="clearW('${o.slug}');return false">remove</a></div>`:'');
++((writeins[o.slug]||'').trim()?`<div style="padding:10px;color:var(--txt)">Your added name: <b>${esc((writeins[o.slug]||'').trim())}</b> <a href="#" onclick="clearW('${o.slug}');return false">remove</a></div>`:'');
 }
 function clearW(r){delete writeins[r];const el=document.getElementById('voteWritein');if(el)el.value='';renderVoteShell();}
 function jumpStep(i){saveWritein();voteIdx=i;voteLimit=30;document.getElementById('voteSearch').value='';document.getElementById('voteWritein').value=writeins[curOffice().slug]||'';renderVoteShell();}
@@ -612,6 +622,7 @@ document.getElementById('voteWritein').addEventListener('input',e=>{const o=curO
 document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')adminUnlock()});
 document.getElementById('fbPhone').addEventListener('keydown',e=>{if(e.key==='Enter')fbSendCode();});
 otpWire();
+applyTheme(document.documentElement.dataset.theme||'dark');
 load();setInterval(load,9000);
 </script>
 </body></html>
