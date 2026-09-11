@@ -82,38 +82,39 @@ def auth_required():
 
 _fb_app = None
 
-def firebase_uid_from_token(token):
-    """Verify a Firebase ID token, return the user's uid. Raises on failure."""
+def firebase_identity_from_token(token):
+    """Verify a Firebase ID token. Returns {"uid","phone"}. Raises on failure."""
     global _fb_app
     import firebase_admin
     from firebase_admin import auth as fb_auth, credentials
     if _fb_app is None:
         _fb_app = firebase_admin.initialize_app(
             credentials.Certificate(json.loads(FIREBASE_SERVICE_JSON)))
-    return fb_auth.verify_id_token(token)["uid"]
+    d = fb_auth.verify_id_token(token)
+    return {"uid": d.get("uid", ""), "phone": d.get("phone_number") or ""}
 
 def verified_uid_or_error():
     """If auth is required, verify Bearer token (or committee admin token).
-    Returns (uid, None) or ('', error_resp). Admin override yields uid ''."""
+    Returns (ident, None) or (None, error_resp). Admin override yields {}."""
     if not auth_required():
-        return "", None
+        return {"uid": "", "phone": ""}, None
     if admin_ok(request.headers.get("X-Admin-Token")) and ADMIN_TOKEN:
-        return "", None
+        return {}, None
     try:
         body_tok = (request.get_json(force=True, silent=True) or {}).get("token")
     except Exception:
         body_tok = None
     if ADMIN_TOKEN and body_tok and body_tok == ADMIN_TOKEN:
-        return "", None
+        return {}, None
     tok = request.headers.get("Authorization") or ""
     if tok.startswith("Bearer "):
         tok = tok[7:].strip()
     if not tok:
-        return "", (jsonify({"error": "Please verify your mobile number first."}), 403)
+        return None, (jsonify({"error": "Please verify your mobile number first."}), 403)
     try:
-        return firebase_uid_from_token(tok), None
+        return firebase_identity_from_token(tok), None
     except Exception:
-        return "", (jsonify({"error": "Verification expired — please verify your number again."}), 403)
+        return None, (jsonify({"error": "Verification expired — please verify your number again."}), 403)
 
 # Chairman is ex-officio (Principal or his appointee) — never on the ballot.
 CHAIRMAN = {"title": "Chairman", "held_by": "Principal or his appointee",
@@ -552,7 +553,7 @@ def add_candidate():
         return jsonify({"error": "Please pick a job first"}), 400
     if not name or len(name) < 2 or len(name) > 60:
         return jsonify({"error": "Name must be 2-60 characters"}), 400
-    _, auth_err = verified_uid_or_error()
+    ident, auth_err = verified_uid_or_error()
     if auth_err:
         return auth_err
     conn = get_db()
@@ -580,6 +581,12 @@ def add_candidate():
         if not phone:
             conn.close()
             return jsonify({"error": "Please check the mobile number — 10 digits."}), 400
+    if auth_required() and (ident or {}).get("phone"):
+        # The volunteered number must be the verified one — no volunteering others.
+        verified = re.sub(r"\D", "", (ident or {})["phone"])[-10:]
+        if not phone or phone[-10:] != verified:
+            conn.close()
+            return jsonify({"error": "Please use your verified mobile number."}), 403
     try:
         cur = conn.execute("INSERT INTO candidates (race, name, phone, created_at) VALUES (?,?,?,?)",
                            (race, name, phone, datetime.utcnow().isoformat()))
@@ -629,10 +636,11 @@ def vote():
     if not voting_open(conn):
         conn.close()
         return jsonify({"error": "Endorsements have not opened yet — we are still collecting volunteers. Please come back soon."}), 403
-    uid, auth_err = verified_uid_or_error()
+    ident, auth_err = verified_uid_or_error()
     if auth_err:
         conn.close()
         return auth_err
+    uid = (ident or {}).get("uid", "")
     if uid:
         dup = conn.execute("SELECT id FROM votes_new WHERE firebase_uid=?", (uid,)).fetchone()
         if dup:

@@ -117,9 +117,10 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 
 <h2 class="sec-title">Step 1 — Volunteer</h2>
 <p class="sec-sub">If you can give time, add your own name.</p>
-<div class="card" id="verifyCard" style="display:none;margin-bottom:12px">
-<h2>Verify your mobile number</h2>
-<p class="sec-sub" style="margin:6px 0 0">Type your mobile number. We will SMS you a 6-digit code. One verified number, one voice.</p>
+<div id="authModal" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.85);padding:20px 16px;overflow:auto">
+<div class="card" style="max-width:430px;margin:10vh auto">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2>Verify your mobile</h2><button class="btn-dim" onclick="closeAuthModal()">Close</button></div>
+<p class="sec-sub" style="margin:6px 0 0">Type your mobile number. We SMS you a 6-digit code. One verified number, one voice — and you do this only once.</p>
 <label for="fbPhone">Mobile number</label>
 <input id="fbPhone" type="tel" inputmode="tel" placeholder="+91 …" autocomplete="off"/>
 <div class="row"><button class="btn-sec" id="fbSendBtn" onclick="fbSendCode()">Send code by SMS</button></div>
@@ -129,6 +130,7 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <div class="row"><button class="btn-pri" onclick="fbConfirmCode()">Confirm</button></div>
 </div>
 <div class="hintline" id="fbHint" style="color:var(--mut)"></div>
+</div>
 </div>
 <div class="card">
 <label for="standName">Your full name</label>
@@ -242,9 +244,26 @@ FB_AUTH=firebase.auth();FB_AUTH.useDeviceLanguage();return FB_AUTH;
 }
 function fbE164(v){v=(v||'').trim().replace(/[\s-]/g,'');if(!v)return '';if(v.startsWith('+'))return v;v=v.replace(/\D/g,'');if(v.length===10)return '+91'+v;if(v.length===12&&v.startsWith('91'))return '+'+v;return '';}
 function authHeaders(h){h=h||{'Content-Type':'application/json'};if(FB_TOKEN)h['Authorization']='Bearer '+FB_TOKEN;return h;}
-function refreshVerifyCard(){
-const need=!!(META.auth_required&&META.firebase);
-document.getElementById('verifyCard').style.display=(need&&!FB_TOKEN)?'block':'none';
+// One-time popup auth: any real action opens the popup if needed,
+// then continues by itself. Login survives reloads; the verified
+// number is filled in for you and never asked twice.
+let PENDING=null;
+function needAuth(next){if(!META.auth_required||FB_TOKEN){if(next)next();return true;}PENDING=next||null;openAuthModal();return false;}
+function openAuthModal(){document.getElementById('authModal').style.display='block';document.getElementById('fbHint').textContent='';setTimeout(()=>{const el=document.getElementById('fbPhone');if(el)el.focus();},80);}
+function closeAuthModal(){document.getElementById('authModal').style.display='none';}
+function prefillPhone(e164){
+const el=document.getElementById('standPhone');if(!el)return;
+let nat=(e164||'').replace(/[\s-]/g,'');
+if(nat.startsWith('+91'))nat=nat.slice(3);
+else{const d=nat.replace(/\D/g,'');const m=d.match(/^(?:91)?(\d{10})$/);nat=m?m[1]:'';}
+if(nat&&/^\d{10}$/.test(nat)){el.value=nat;el.readOnly=true;el.title='Your verified number. Tap to use a different number.';}
+}
+async function fbRestore(){
+if(!(META.auth_required&&META.firebase))return;
+try{
+const a=await fbAuth();
+a.onAuthStateChanged(async u=>{if(u){FB_USER=u;try{FB_TOKEN=await u.getIdToken(true);}catch(e){try{FB_TOKEN=await u.getIdToken();}catch(_){}}if(FB_TOKEN)prefillPhone(u.phoneNumber||'');}});
+}catch(e){}
 }
 async function fbSendCode(){
 const to=fbE164(document.getElementById('fbPhone').value);
@@ -264,7 +283,10 @@ if(code.length<4)return toast('Please type the 6-digit code');
 try{
 const r=await FB_CONFIRM.confirm(code);
 FB_USER=r.user;FB_TOKEN=await FB_USER.getIdToken();
-toast('Number verified. Thank you!');refreshVerifyCard();
+prefillPhone(FB_USER.phoneNumber||'');
+closeAuthModal();
+toast('Number verified. Thank you!');
+const p=PENDING;PENDING=null;if(p)p();
 }catch(e){toast('Wrong code — please try again.');}
 }
 async function load(){
@@ -275,7 +297,7 @@ if(s.election){document.getElementById('meetBadge').innerHTML=`<i></i>St Peter's
 document.getElementById('tVotes').textContent=s.total_votes;
 document.getElementById('tCands').textContent=Object.values(s.candidates).reduce((a,b)=>a+b.length,0);
 document.getElementById('tOff').textContent=s.offices.length;
-fillJobSelect();renderJobs();renderVote();renderRes();renderPlan(s);refreshVerifyCard();
+fillJobSelect();renderJobs();renderVote();renderRes();renderPlan(s);fbRestore();
 if(IS_ADMIN_ROUTE){document.getElementById('adminSec').style.display='block';renderAdmin();if(!window._admSeen){window._admSeen=true;window.scrollTo({top:document.getElementById('adminSec').offsetTop});}}
 if(IS_ADMIN_ROUTE){document.getElementById('adminSec').style.display='block';renderAdmin();}
 }catch(e){}
@@ -309,7 +331,7 @@ if(nm.length<2)return toast('Please type your full name');
 if(!/^(200[89]|201\d|202[01])$/.test(b))return toast('Please type your batch year (2008–2021)');
 if(!/^(91\d{10}|\d{10})$/.test(ph))return toast('Please type your 10-digit mobile number');
 if(!j)return toast('Please pick a role');
-if(META.auth_required&&!FB_TOKEN)return toast('Please verify your mobile number first (top of this page).');
+if(!needAuth(stand))return;
 const btn=document.getElementById('standBtn');btn.disabled=true;
 try{await api('/api/candidates',{method:'POST',headers:authHeaders(),body:JSON.stringify({race:j,name:`${nm} (${b})`,phone:ph})});
 document.getElementById('standName').value='';document.getElementById('standBatch').value='';document.getElementById('standPhone').value='';
@@ -380,10 +402,8 @@ function pick(race,id){sel[race]=id;delete writeins[race];if(curOffice()&&curOff
 async function submitVote(){
 saveWritein();
 if(!META.voting_open)return toast('Endorsements have not opened yet — we are still collecting volunteers.');
-if(META.auth_required){
-if(!FB_USER)return toast('Please verify your mobile number first (top of this page).');
-try{FB_TOKEN=await FB_USER.getIdToken();}catch(e){}
-}
+if(!needAuth(submitVote))return;
+if(FB_USER){try{FB_TOKEN=await FB_USER.getIdToken();}catch(e){}}
 const voter=document.getElementById('voter').value.trim();
 if(!voter)return toast('Please type your name');
 const choices={},wins={};
@@ -491,6 +511,7 @@ try{await api('/api/reset',{method:'POST',headers:adminHeaders(),body:JSON.strin
 document.getElementById('voter').addEventListener('keydown',e=>{if(e.key==='Enter')submitVote()});
 document.getElementById('standName').addEventListener('keydown',e=>{if(e.key==='Enter')stand()});
 document.getElementById('standBatch').addEventListener('keydown',e=>{if(e.key==='Enter')stand()});
+document.getElementById('standPhone').addEventListener('click',e=>{if(e.target.readOnly)openAuthModal();});
 document.getElementById('standPhone').addEventListener('keydown',e=>{if(e.key==='Enter')stand()});
 document.getElementById('voteWritein').addEventListener('input',e=>{const o=curOffice();if(!o)return;if(e.target.value.trim()&&sel[o.slug])delete sel[o.slug];});
 document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')adminUnlock()});
