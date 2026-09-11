@@ -48,7 +48,10 @@ def rate_limit(max_calls, per_seconds):
             key = (fn.__name__, client_ip())
             hits = [t for t in _RL[key] if now - t < per_seconds]
             if len(hits) >= max_calls:
-                return jsonify({"error": "Too many tries — please wait a minute and retry."}), 429
+                resp = jsonify({"error": "Too many tries — please wait a minute and retry."})
+                resp.status_code = 429
+                resp.headers["Retry-After"] = "60"
+                return resp
             hits.append(now)
             _RL[key] = hits
             return fn(*a, **k)
@@ -489,7 +492,7 @@ def delete_office(slug):
     return jsonify({"ok": True})
 
 @app.get("/api/state")
-@rate_limit(600, 60)
+@rate_limit(2400, 60)
 def state():
     conn = get_db()
     vt = "votes_new"
@@ -566,7 +569,7 @@ def state():
     })
 
 @app.post("/api/candidates")
-@rate_limit(120, 60)
+@rate_limit(300, 60)
 def add_candidate():
     data = request.get_json(force=True, silent=True) or {}
     race = slugify(data.get("race"))
@@ -604,11 +607,14 @@ def add_candidate():
             conn.close()
             return jsonify({"error": "Please check the mobile number — 10 digits."}), 400
     if auth_required() and (ident or {}).get("phone"):
-        # The volunteered number must be the verified one — no volunteering others.
+        # The verified number travels with the login — no need to type it twice.
         verified = re.sub(r"\D", "", (ident or {})["phone"])[-10:]
-        if not phone or phone[-10:] != verified:
-            conn.close()
-            return jsonify({"error": "Please use your verified mobile number."}), 403
+        if phone:
+            if phone[-10:] != verified:
+                conn.close()
+                return jsonify({"error": "Please use your verified mobile number."}), 403
+        else:
+            phone = verified
     try:
         cur = conn.execute("INSERT INTO candidates (race, name, phone, created_at) VALUES (?,?,?,?)",
                            (race, name, phone, datetime.utcnow().isoformat()))
@@ -621,7 +627,7 @@ def add_candidate():
     return jsonify({"ok": True, "id": cid, "race": race, "name": name})
 
 @app.post("/api/vote")
-@rate_limit(60, 60)
+@rate_limit(120, 60)
 def vote():
     data = request.get_json(force=True, silent=True) or {}
     voter = norm(data.get("voter"))

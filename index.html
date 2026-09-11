@@ -265,15 +265,17 @@ function authHeaders(h){h=h||{'Content-Type':'application/json'};if(FB_TOKEN)h['
 // then continues by itself. Login survives reloads; the verified
 // number is filled in for you and never asked twice.
 let PENDING=null;
-function needAuth(next){if(!META.auth_required||FB_TOKEN){if(next)next();return true;}PENDING=next||null;openAuthModal();return false;}
-function openAuthModal(){document.getElementById('authModal').style.display='block';document.getElementById('fbHint').textContent='';setTimeout(()=>{const el=document.getElementById('fbPhone');if(el)el.focus();},80);}
+function needAuth(tag){if(!META.auth_required||FB_TOKEN)return true;PENDING=tag||null;openAuthModal();return false;}
+function openAuthModal(){const m=document.getElementById('authModal');if(m.style.display==='block')return;m.style.display='block';document.getElementById('fbHint').textContent='';setTimeout(()=>{const el=document.getElementById('fbPhone');if(el)el.focus();},80);}
 function closeAuthModal(){document.getElementById('authModal').style.display='none';}
+let FB_WATCHING=false;
 async function fbRestore(){
-if(!(META.auth_required&&META.firebase))return;
+if(!(META.auth_required&&META.firebase)||FB_WATCHING)return;
+FB_WATCHING=true;
 try{
 const a=await fbAuth();
-a.onAuthStateChanged(async u=>{if(u){FB_USER=u;try{FB_TOKEN=await u.getIdToken(true);}catch(e){try{FB_TOKEN=await u.getIdToken();}catch(_){}}}});
-}catch(e){}
+a.onAuthStateChanged(async u=>{if(u){FB_USER=u;try{FB_TOKEN=await u.getIdToken();}catch(e){}}});
+}catch(e){FB_WATCHING=false;}
 }
 async function fbRecap(){
 if(window._fbRecap)return window._fbRecap;
@@ -305,6 +307,7 @@ if(d.length)boxes[Math.min(d.length,5)].focus();
 }
 async function fbSendCode(){
 const btn=document.getElementById('fbSendBtn');
+if(btn.disabled)return;
 const to=fbE164(document.getElementById('fbPhone').value);
 if(!to)return toast('Please type your mobile number');
 btn.disabled=true;btn.innerHTML='<span class="spin">◌</span> Sending…';
@@ -332,6 +335,7 @@ toast('Could not send SMS ('+code+')');
 }
 async function fbConfirmCode(){
 const btn=document.getElementById('fbConfirmBtn');
+if(btn.disabled)return;
 const code=otpCode();
 if(code.length<6){document.getElementById('otpRow').classList.remove('shake');void document.getElementById('otpRow').offsetWidth;document.getElementById('otpRow').classList.add('shake');return toast('Please type all 6 digits');}
 btn.disabled=true;btn.innerHTML='<span class="spin">◌</span> Checking…';
@@ -340,7 +344,7 @@ const r=await FB_CONFIRM.confirm(code);
 FB_USER=r.user;FB_TOKEN=await FB_USER.getIdToken();
 closeAuthModal();
 toast('Number verified. Thank you!');
-const p=PENDING;PENDING=null;if(p)p();
+const p=PENDING;PENDING=null;if(p==='stand')stand();else if(p==='vote')submitVote();
 }catch(e){document.getElementById('otpRow').classList.remove('shake');void document.getElementById('otpRow').offsetWidth;document.getElementById('otpRow').classList.add('shake');toast('Wrong code — please try again.');
 }finally{btn.disabled=false;btn.textContent='Confirm';}
 }
@@ -376,21 +380,23 @@ else{h.className='hintline free';h.textContent=`Batch ${b} · ${o.title}: ${2-ta
 }
 ['standName','standBatch'].forEach(id=>document.getElementById(id).addEventListener('input',slotHint));
 document.getElementById('standJob').addEventListener('change',slotHint);
+let STANDING=false;
 async function stand(){
+if(STANDING)return;
 const nm=(document.getElementById('standName').value||'').trim();
 const b=(document.getElementById('standBatch').value||'').trim();
 const j=document.getElementById('standJob').value;
 if(nm.length<2)return toast('Please type your full name');
 if(!/^(200[89]|201\d|202[01])$/.test(b))return toast('Please type your batch year (2008–2021)');
 if(!j)return toast('Please pick a role');
-if(!needAuth(stand))return;
+if(!needAuth('stand'))return;
 // Verified number travels automatically — typed only once, in the popup.
 let ph='';
 if(FB_USER&&FB_USER.phoneNumber){ph=FB_USER.phoneNumber.replace(/\D/g,'').replace(/^91(\d{10})$/,'$1');}
-const btn=document.getElementById('standBtn');btn.disabled=true;
+const btn=document.getElementById('standBtn');STANDING=true;btn.disabled=true;
 try{await api('/api/candidates',{method:'POST',headers:authHeaders(),body:JSON.stringify({race:j,name:`${nm} (${b})`,phone:ph})});
 document.getElementById('standName').value='';document.getElementById('standBatch').value='';
-toast('Thank you for stepping forward!');load();}catch(e){toast(e.message)}finally{btn.disabled=false}
+toast('Thank you for stepping forward!');load();}catch(e){toast(e.message)}finally{STANDING=false;btn.disabled=false}
 }
 // WHO IS STANDING
 function renderJobs(){
@@ -430,7 +436,7 @@ renderVoteList();
 const vl1=document.getElementById('voteList');if(vl1)vl1.scrollTop=scTop;
 const wbox=document.getElementById('voteWritein');
 if(wbox&&document.activeElement!==wbox&&wbox.value!==(writeins[o.slug]||''))wbox.value=writeins[o.slug]||'';
-const btn=document.getElementById('voteBtn');btn.disabled=false;
+const btn=document.getElementById('voteBtn');if(!VOTING)btn.disabled=!META.voting_open;
 document.getElementById('prog').textContent=`You supported ${done} of ${OFFICES.length}`;
 }
 function nameOf(race,id){const c=(CANDS[race]||[]).find(x=>x.id===id);return c?c.name:''}
@@ -454,10 +460,12 @@ function stepMove(d){saveWritein();voteIdx=Math.max(0,Math.min(OFFICES.length-1,
 function saveWritein(){const o=curOffice();if(!o)return;const v=document.getElementById('voteWritein').value||'';if(v.trim()){writeins[o.slug]=v;delete sel[o.slug];}}
 function useWritein(){const o=curOffice();const v=(document.getElementById('voteWritein').value||'').trim();if(!v)return toast('Please type the name first');writeins[o.slug]=v;delete sel[o.slug];renderVoteShell();toast('Name saved for '+o.title);}
 function pick(race,id){sel[race]=id;delete writeins[race];if(curOffice()&&curOffice().slug===race){document.getElementById('voteWritein').value='';}renderVoteShell();}
+let VOTING=false;
 async function submitVote(){
+if(VOTING)return;
 saveWritein();
 if(!META.voting_open)return toast('Endorsements have not opened yet — we are still collecting volunteers.');
-if(!needAuth(submitVote))return;
+if(!needAuth('vote'))return;
 if(FB_USER){try{FB_TOKEN=await FB_USER.getIdToken();}catch(e){}}
 const voter=document.getElementById('voter').value.trim();
 if(!voter)return toast('Please type your name');
@@ -465,8 +473,8 @@ const choices={},wins={};
 OFFICES.forEach(o=>{if(sel[o.slug])choices[o.slug]=sel[o.slug];const w=(writeins[o.slug]||'').trim();if(w&&!sel[o.slug])wins[o.slug]=w;});
 const missing=OFFICES.filter(o=>!choices[o.slug]&&!wins[o.slug]);
 if(missing.length){voteIdx=OFFICES.indexOf(missing[0]);renderVoteShell();return toast('Please support someone for: '+missing.map(o=>o.title).join(', '));}
-const btn=document.getElementById('voteBtn');btn.disabled=true;
-try{await api('/api/vote',{method:'POST',headers:authHeaders(),body:JSON.stringify({voter,choices,writeins:wins})});toast('Thank you '+voter+' — your support is counted.');sel={};writeins={};voteIdx=0;document.getElementById('voter').value='';document.getElementById('voteWritein').value='';load();}catch(e){toast(e.message)}finally{btn.disabled=false}
+const btn=document.getElementById('voteBtn');VOTING=true;btn.disabled=true;
+try{await api('/api/vote',{method:'POST',headers:authHeaders(),body:JSON.stringify({voter,choices,writeins:wins})});toast('Thank you '+voter+' — your support is counted.');sel={};writeins={};voteIdx=0;document.getElementById('voter').value='';document.getElementById('voteWritein').value='';load();}catch(e){toast(e.message)}finally{VOTING=false;btn.disabled=false}
 }
 // RESULTS
 function renderRes(){
