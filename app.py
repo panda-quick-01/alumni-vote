@@ -69,10 +69,6 @@ TERM_LABEL = os.environ.get("TERM_LABEL", "")
 
 def election_label():
     return f"Alumni Meet {ELECTION_YEAR}".strip()
-# Fraud reports: set CONTACT_NUMBER (e.g. +91 98XXX XXXXX) to show a call link
-# on the endorsement card ("Someone endorsed in your name? Call …").
-CONTACT_NUMBER = os.environ.get("CONTACT_NUMBER", "").strip()
-CONTACT_LABEL = os.environ.get("CONTACT_LABEL", "the committee").strip() or "the committee"
 # Firebase phone login (optional). When AUTH_REQUIRED=1 plus both configs below,
 # every volunteer/voter verifies their mobile by SMS code, and one verified
 # number gets exactly one endorsement. Off by default (name-based flow).
@@ -227,6 +223,14 @@ def init_db():
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kind TEXT NOT NULL,
+        detail TEXT NOT NULL,
+        reporter_uid TEXT NOT NULL DEFAULT '',
+        reporter_phone TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL
+    );
     """)
     # Identity is the phone number now: two people may share a name in one
     # batch, so names are NOT unique — (race, phone) is.
@@ -364,10 +368,10 @@ def norm(s):
 # Self-nomination rules: batches 2008–2021; every batch gets 2 places per role.
 # Identity is the phone number (names may repeat), so one number = one role.
 # Batch of 2021 is excused to focus on studies.
-BATCH_MIN, BATCH_MAX = 2008, 2021
+BATCH_MIN, BATCH_MAX = 2008, 2027
 BATCH_STUDY_CUTOFF = 2020  # volunteers must be this batch or earlier
 BATCH_SLOT_LIMIT = 2
-BATCH_YEAR_RE = re.compile(r"\b(200[89]|201\d|202[01])\b")
+BATCH_YEAR_RE = re.compile(r"\b(200[89]|201\d|202[0-7])\b")
 ANY_YEAR_RE = re.compile(r"\b(19\d\d|20\d\d)\b")
 
 def parse_batch(name):
@@ -394,7 +398,7 @@ def nomination_error(conn, race, name, phone=""):
     batch = parse_batch(name)
     if not batch:
         if ANY_YEAR_RE.search(name or ""):
-            return ("Sorry, this process covers batches 2008 to 2021. "
+            return ("Sorry, this process covers batches 2008 to 2027. "
                     "Please check the batch year.")
         return "Please add the batch year with the name, e.g. Anita Rao (2012)."
     if int(batch) > BATCH_STUDY_CUTOFF:
@@ -606,7 +610,6 @@ def state():
         "admin_enabled": bool(ADMIN_TOKEN),
         "auth_required": auth_required(),
         "firebase": FIREBASE_WEB_CONFIG,
-        "contact": {"number": CONTACT_NUMBER, "label": CONTACT_LABEL} if CONTACT_NUMBER else None,
         "offices": offices,
         "candidates": cands,
         "results": results,
@@ -835,11 +838,15 @@ def _export_data():
         """)]
     except Exception:
         votes, choices = [], []
+    try:
+        reports = [dict(r) for r in conn.execute("SELECT * FROM reports ORDER BY id DESC")]
+    except Exception:
+        reports = []
     conn.close()
     return {"exported_at": datetime.utcnow().isoformat(), "election": election_label(),
             "year": ELECTION_YEAR, "meet_when": MEET_WHEN, "term": TERM_LABEL,
             "plan": PLAN, "offices": offices, "candidates": cands,
-            "votes": votes, "choices": choices}
+            "votes": votes, "choices": choices, "reports": reports}
 
 @app.post("/api/reset")
 @rate_limit(30, 60)
@@ -922,6 +929,63 @@ def admin_remove_name():
     conn.execute("DELETE FROM candidates WHERE id=?", (cid,))
     conn.commit(); conn.close()
     return jsonify({"ok": True, "removed": row["name"]})
+
+REPORT_KINDS = ("name-misuse", "duplicate-person", "other")
+
+@app.post("/api/reports")
+@rate_limit(30, 60)
+def file_report():
+    # Only a verified number can report — the report carries that identity,
+    # so the committee can call back. No phone typing needed.
+    ident, auth_err = verified_uid_or_error()
+    if auth_err:
+        return auth_err
+    data = request.get_json(force=True, silent=True) or {}
+    kind = data.get("kind") or "other"
+    if kind not in REPORT_KINDS:
+        kind = "other"
+    detail = norm(data.get("detail"))
+    if len(detail) < 5 or len(detail) > 500:
+        return jsonify({"error": "Please describe the problem in a few words."}), 400
+    uid = (ident or {}).get("uid", "")
+    vphone = re.sub(r"\D", "", ((ident or {}).get("phone") or ""))[-10:]
+    conn = get_db()
+    cur = conn.execute("INSERT INTO reports (kind, detail, reporter_uid, reporter_phone, created_at)"
+                       " VALUES (?,?,?,?,?)",
+                       (kind, detail, uid, vphone, datetime.utcnow().isoformat()))
+    conn.commit(); conn.close()
+    return jsonify({"ok": True, "id": cur.lastrowid})
+
+@app.post("/api/admin/reports")
+@rate_limit(30, 60)
+def admin_reports():
+    if not ADMIN_TOKEN:
+        return jsonify({"error": "Admin disabled (set ADMIN_TOKEN to enable)"}), 403
+    data = request.get_json(force=True, silent=True) or {}
+    if not admin_ok(data.get("token")):
+        return jsonify({"error": "Bad token"}), 403
+    conn = get_db()
+    rows = [dict(r) for r in conn.execute(
+        "SELECT id, kind, detail, reporter_phone, created_at FROM reports ORDER BY id DESC LIMIT 100")]
+    conn.close()
+    return jsonify({"reports": rows})
+
+@app.post("/api/admin/reports/resolve")
+@rate_limit(30, 60)
+def admin_reports_resolve():
+    if not ADMIN_TOKEN:
+        return jsonify({"error": "Admin disabled (set ADMIN_TOKEN to enable)"}), 403
+    data = request.get_json(force=True, silent=True) or {}
+    if not admin_ok(data.get("token")):
+        return jsonify({"error": "Bad token"}), 403
+    try:
+        rid = int(data.get("id"))
+    except Exception:
+        return jsonify({"error": "Please give a valid report id"}), 400
+    conn = get_db()
+    conn.execute("DELETE FROM reports WHERE id=?", (rid,))
+    conn.commit(); conn.close()
+    return jsonify({"ok": True})
 
 @app.get("/")
 def index():

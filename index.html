@@ -155,7 +155,7 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <label for="standName">Your full name</label>
 <input id="standName" type="text" maxlength="60" placeholder="e.g. Anita Rao" autocomplete="off"/>
 <label for="standBatch">Your batch year</label>
-<input id="standBatch" type="number" inputmode="numeric" min="2008" max="2021" placeholder="e.g. 2004"/>
+<input id="standBatch" type="number" inputmode="numeric" min="2008" max="2027" placeholder="e.g. 2004"/>
 <label for="standJob">Which role?</label>
 <select id="standJob"></select>
 <div id="slotHint" class="hintline"></div>
@@ -163,7 +163,7 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <ul class="rules">
 <li>Every batch gets <b>2 places</b> for each role.</li>
 <li>One person, one role.</li>
-<li>Batches 2008 to 2021. Batch of 2021 — please focus on studies; you can still endorse.</li>
+<li>Batches 2008 to 2027. Batches of 2021 and later — please focus on studies; you can still endorse.</li>
 <li>The role list gets fixed once endorsements open.</li>
 </ul>
 </div>
@@ -176,8 +176,8 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <div id="jobGrid" class="grid grid2" style="margin-top:12px"></div>
 
 <h2 class="sec-title">Step 2 — Endorse</h2>
-<p class="sec-sub" id="voteSub">Support one person for each of the 7 roles.</p>
-<div id="voteClosed" class="note lock">We are still collecting volunteers — endorsements will open soon. Please come back then.</div>
+<p class="sec-sub" id="voteSub">Everyone endorses — all batches. Support one person for each of the 7 roles; it takes two minutes and carries no responsibility.</p>
+<div id="voteClosed" class="note lock">We are still collecting volunteers — endorsements will open soon for every batch. Please come back then.</div>
 <div id="voteOpen" style="display:none">
 <div class="chips" id="voteSteps"></div>
 <div class="card" style="margin-top:12px">
@@ -192,7 +192,15 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <div id="prog" class="progress"></div>
 <button id="voteBtn" class="btn-pri" onclick="submitVote()">Endorse</button>
 <p class="sec-sub" style="margin:10px 0 0">Tap one name for each role, then press the button. One person, one endorsement.</p>
-<div id="contactLine" class="hintline" style="display:none">Someone endorsed in your name? Call <a id="contactLink" class="wa-link" href="#">…</a> and we will remove it.</div></div>
+<div style="margin-top:8px"><a href="#" onclick="toggleReport();return false" style="font-size:13px;color:var(--mut)">See something wrong? Report it here.</a></div>
+<div id="reportBox" style="display:none;margin-top:10px;border-top:1px solid #141414;padding-top:10px">
+<label for="repKind">What happened?</label>
+<select id="repKind"><option value="name-misuse">Someone used my name</option><option value="duplicate-person">Same person twice (two numbers?)</option><option value="other">Something else</option></select>
+<label for="repDetail">Tell us briefly</label>
+<input id="repDetail" type="text" maxlength="500" placeholder="e.g. Ravi Kumar (2010) is listed twice"/>
+<div class="row"><button class="btn-sec" id="repBtn" onclick="submitReport()">Send report</button></div>
+<div class="hintline" style="color:var(--mut)">Your verified number goes with the report, so the committee can call you back. No need to type it.</div>
+</div></div>
 </div>
 
 <h2 class="sec-title">Step 3 — Our committee</h2>
@@ -217,6 +225,8 @@ details summary{cursor:pointer;font-weight:650;min-height:44px}
 <div class="note ok" id="adminStatus"></div>
 <div class="row"><button class="btn-sec" id="voteToggle" onclick="adminToggleVoting()">Open endorsements</button></div>
 <div class="row"><button class="btn-sec" onclick="adminExport()">Download all data</button></div>
+<div class="row"><button class="btn-dim" onclick="adminLoadReports()">Read problem reports (<span id="repCount">0</span>)</button></div>
+<div id="repList" style="margin-top:8px"></div>
 <div class="row"><input id="rmVoter" type="text" maxlength="60" placeholder="Name that endorsed"/></div>
 <div class="row"><button class="btn-dim" onclick="adminRemoveSupport()">Remove that endorsement</button></div>
 <div class="row"><input id="rmName" type="number" inputmode="numeric" placeholder="Name id (see download)"/></div>
@@ -246,11 +256,11 @@ let sel={},writeins={},voteIdx=0,voteLimit=30,lastVoteSlug='';
 const IS_ADMIN_ROUTE=window.location.pathname.replace(/\/+$/,'')!=='';
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3600)}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function batchOf(n){const m=(n||'').match(/\b(200[89]|201\d|202[01])\b/);return m?m[0]:''}
+function batchOf(n){const m=(n||'').match(/\b(200[89]|201\d|202[0-7])\b/);return m?m[0]:''}
 // Same name twice in one list (two people, one batch)? Show ••• + last 3
 // digits of the number so voters can tell them apart. Numbers stay private.
 function dispName(arr,c){const dup=arr.filter(x=>x.name===c.name).length>1&&c.mask;return esc(c.name)+(dup?` <span class="bt">•••${esc(c.mask)}</span>`:'');}
-function personOf(n){return (n||'').replace(/\(.*?\)/g,' ').replace(/\b(200[89]|201\d|202[01])\b/g,' ').replace(/\s+/g,' ').trim().toLowerCase()}
+function personOf(n){return (n||'').replace(/\(.*?\)/g,' ').replace(/\b(200[89]|201\d|202[0-7])\b/g,' ').replace(/\s+/g,' ').trim().toLowerCase()}
 async function api(p,o){const r=await fetch(p,{headers:{'Content-Type':'application/json'},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j}
 // Firebase phone login (only active once the committee configures it).
 let FB_USER=null,FB_TOKEN='',FB_CONFIRM=null,FB_AUTH=null;
@@ -347,7 +357,7 @@ const r=await FB_CONFIRM.confirm(code);
 FB_USER=r.user;FB_TOKEN=await FB_USER.getIdToken();
 closeAuthModal();
 toast('Number verified. Thank you!');
-const p=PENDING;PENDING=null;if(p==='stand')stand();else if(p==='vote')submitVote();
+const p=PENDING;PENDING=null;if(p==='stand')stand();else if(p==='vote')submitVote();else if(p==='report')submitReport();
 }catch(e){document.getElementById('otpRow').classList.remove('shake');void document.getElementById('otpRow').offsetWidth;document.getElementById('otpRow').classList.add('shake');toast('Wrong code — please try again.');
 }finally{btn.disabled=false;btn.textContent='Confirm';}
 }
@@ -375,7 +385,7 @@ const j=document.getElementById('standJob').value;
 const nm=(document.getElementById('standName').value||'').trim();
 const h=document.getElementById('slotHint');
 const o=OFFICES.find(x=>x.slug===j);if(!o){h.textContent='';return;}
-if(!/^(200[89]|201\d|202[01])$/.test(b)){h.className='hintline';h.textContent=`${o.title}: every batch gets 2 places.`;return;}
+if(!/^(200[89]|201\d|202[0-7])$/.test(b)){h.className='hintline';h.textContent=`${o.title}: every batch gets 2 places.`;return;}
 const taken=(CANDS[j]||[]).filter(c=>batchOf(c.name)===b).length;
 const mine=nm&&personOf(nm).length>1?(OFFICES.filter(x=>x.slug!==j).find(x=>(CANDS[x.slug]||[]).some(c=>personOf(c.name)===personOf(nm)&&personOf(nm)))):null;
 if(taken>=2){h.className='hintline full';h.textContent=`Batch ${b} · ${o.title}: full (2 of 2 taken). Try another job.`;}
@@ -390,7 +400,7 @@ const nm=(document.getElementById('standName').value||'').trim();
 const b=(document.getElementById('standBatch').value||'').trim();
 const j=document.getElementById('standJob').value;
 if(nm.length<2)return toast('Please type your full name');
-if(!/^(200[89]|201\d|202[01])$/.test(b))return toast('Please type your batch year (2008–2021)');
+if(!/^(200[89]|201\d|202[0-7])$/.test(b))return toast('Please type your batch year (2008–2027)');
 if(!j)return toast('Please pick a role');
 if(!needAuth('stand'))return;
 // Verified number travels automatically — typed only once, in the popup.
@@ -417,11 +427,7 @@ function renderVote(){
 const open=!!META.voting_open;
 document.getElementById('voteClosed').style.display=open?'none':'block';
 document.getElementById('voteOpen').style.display=open?'block':'none';
-const cc=META.contact;
-if(cc&&cc.number){const cl=document.getElementById('contactLine');cl.style.display='block';
-const a=document.getElementById('contactLink');a.href='tel:'+cc.number.replace(/[\s-]/g,'');a.textContent=cc.number+(cc.label?' ('+cc.label+')':'');}
-else{document.getElementById('contactLine').style.display='none';}
-document.getElementById('voteSub').textContent=open?'Support one person for each of the 7 roles.':'Endorsements open after names are in. You will support one person per role.';
+document.getElementById('voteSub').textContent=open?'Everyone endorses — support one person for each of the 7 roles.':'Endorsements open after names are in, for every batch. You will support one person per role.';
 if(!open)return;
 renderVoteShell();
 }
@@ -464,6 +470,20 @@ function saveWritein(){const o=curOffice();if(!o)return;const v=document.getElem
 function useWritein(){const o=curOffice();const v=(document.getElementById('voteWritein').value||'').trim();if(!v)return toast('Please type the name first');writeins[o.slug]=v;delete sel[o.slug];renderVoteShell();toast('Name saved for '+o.title);}
 function pick(race,id){sel[race]=id;delete writeins[race];if(curOffice()&&curOffice().slug===race){document.getElementById('voteWritein').value='';}renderVoteShell();}
 let VOTING=false;
+function toggleReport(){const b=document.getElementById('reportBox');b.style.display=b.style.display==='none'?'block':'none';}
+let REPORTING=false;
+async function submitReport(){
+if(REPORTING)return;
+const kind=document.getElementById('repKind').value||'other';
+const detail=(document.getElementById('repDetail').value||'').trim();
+if(detail.length<5)return toast('Please describe the problem in a few words');
+if(!needAuth('report'))return;
+if(FB_USER){try{FB_TOKEN=await FB_USER.getIdToken();}catch(e){}}
+const btn=document.getElementById('repBtn');REPORTING=true;btn.disabled=true;
+try{await api('/api/reports',{method:'POST',headers:authHeaders(),body:JSON.stringify({kind,detail})});
+document.getElementById('repDetail').value='';document.getElementById('reportBox').style.display='none';
+toast('Report sent. The committee will look into it. Thank you.');}catch(e){toast(e.message)}finally{REPORTING=false;btn.disabled=false}
+}
 async function submitVote(){
 if(VOTING)return;
 saveWritein();
@@ -569,6 +589,17 @@ async function adminAddJob(){
 const t=(document.getElementById('newJob').value||'').trim();
 if(!t)return toast('Please type a role title first');
 try{const r=await api('/api/offices',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,title:t})});document.getElementById('newJob').value='';toast('Role added: '+r.title);load();}catch(e){toast(e.message);}
+}
+async function adminLoadReports(){
+try{
+const r=await api('/api/admin/reports',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK})});
+const arr=r.reports||[];
+document.getElementById('repCount').textContent=arr.length;
+document.getElementById('repList').innerHTML=arr.map(x=>`<div class="nomrow"><div><b>#${x.id} · ${esc(x.kind)}</b><br/><small>${esc(x.detail)}${x.reporter_phone?`<br/>Call back: ${esc(x.reporter_phone)}`:''}</small></div><button class="btn-dim" onclick="adminResolveReport(${x.id})">Done</button></div>`).join('')||'<p style="color:var(--mut);font-size:14px">No reports. All quiet.</p>';
+}catch(e){toast(e.message);}
+}
+async function adminResolveReport(id){
+try{await api('/api/admin/reports/resolve',{method:'POST',headers:adminHeaders(),body:JSON.stringify({token:ADMINTOK,id})});adminLoadReports();}catch(e){toast(e.message);}
 }
 async function adminReset(what){
 if(!confirm(what==='all'?'Delete EVERYTHING (all names and votes)? This cannot be undone.':'Delete all endorsements? The names will stay.'))return;
