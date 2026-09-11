@@ -247,6 +247,9 @@ const IS_ADMIN_ROUTE=window.location.pathname.replace(/\/+$/,'')!=='';
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3600)}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function batchOf(n){const m=(n||'').match(/\b(200[89]|201\d|202[01])\b/);return m?m[0]:''}
+// Same name twice in one list (two people, one batch)? Show ••• + last 3
+// digits of the number so voters can tell them apart. Numbers stay private.
+function dispName(arr,c){const dup=arr.filter(x=>x.name===c.name).length>1&&c.mask;return esc(c.name)+(dup?` <span class="bt">•••${esc(c.mask)}</span>`:'');}
 function personOf(n){return (n||'').replace(/\(.*?\)/g,' ').replace(/\b(200[89]|201\d|202[01])\b/g,' ').replace(/\s+/g,' ').trim().toLowerCase()}
 async function api(p,o){const r=await fetch(p,{headers:{'Content-Type':'application/json'},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error');return j}
 // Firebase phone login (only active once the committee configures it).
@@ -405,7 +408,7 @@ document.getElementById('jobGrid').innerHTML=OFFICES.map(o=>{
 const all=CANDS[o.slug]||[];
 const list=all.filter(c=>!q||c.name.toLowerCase().includes(q));
 return `<div class="card"><div class="jobhead"><div><h2>${esc(o.title)}</h2><p>${esc(o.desc||'')}</p></div><span class="count">${all.length} name${all.length===1?'':'s'}</span></div>
-<ul class="names">${list.map(c=>`<li><span>${esc(c.name)}</span>${batchOf(c.name)?`<span class="bt">${esc(batchOf(c.name))}</span>`:''}</li>`).join('')||'<li><span style="color:var(--mut)">No names yet — be the first above.</span></li>'}</ul></div>`}).join('');
+<ul class="names">${list.map(c=>`<li><span>${dispName(all,c)}</span>${batchOf(c.name)?`<span class="bt">${esc(batchOf(c.name))}</span>`:''}</li>`).join('')||'<li><span style="color:var(--mut)">No names yet — be the first above.</span></li>'}</ul></div>`}).join('');
 slotHint();
 }
 // VOTE
@@ -450,7 +453,7 @@ let list=(CANDS[o.slug]||[]).filter(c=>!q||c.name.toLowerCase().includes(q));
 const total=list.length;list=list.slice(0,voteLimit);
 document.getElementById('voteList').innerHTML=(list.map(c=>{
 const b=batchOf(c.name);
-return `<label class="cand ${sel[o.slug]===c.id?'sel':''}"><input type="radio" name="${o.slug}" ${sel[o.slug]===c.id?'checked':''} onchange="pick('${o.slug}',${c.id})"/><span class="nm">${esc(c.name)}</span>${b?`<span class="bt">${esc(b)}</span>`:''}</label>`}).join('')||'<div style="padding:14px;color:var(--mut)">No match — type the name below.</div>')
+return `<label class="cand ${sel[o.slug]===c.id?'sel':''}"><input type="radio" name="${o.slug}" ${sel[o.slug]===c.id?'checked':''} onchange="pick('${o.slug}',${c.id})"/><span class="nm">${dispName(CANDS[o.slug]||[],c)}</span>${b?`<span class="bt">${esc(b)}</span>`:''}</label>`}).join('')||'<div style="padding:14px;color:var(--mut)">No match — type the name below.</div>')
 +(total>voteLimit?`<div style="padding:10px;text-align:center"><button class="btn-dim" onclick="voteLimit+=50;renderVoteList()">See more names (${total-voteLimit} more)</button></div>`:'')
 +((writeins[o.slug]||'').trim()?`<div style="padding:10px;color:#fff">Your added name: <b>${esc((writeins[o.slug]||'').trim())}</b> <a href="#" onclick="clearW('${o.slug}');return false">remove</a></div>`:'');
 }
@@ -487,7 +490,7 @@ document.getElementById('commList').innerHTML=OFFICES.map(o=>{
 const w=comm[o.slug];
 if(!w)return `<li><span>${esc(o.title)}</span><span class="bt">—</span></li>`;
 const note=w.how==='chairman decides'?'Chairman to decide':w.how==='tie — stepped forward first'?'Led: stepped forward first':w.how==='only volunteer'?'Only volunteer':w.votes+' supporter'+(w.votes===1?'':'s');
-return `<li><span><b>${esc(o.title)}</b><br/><span style="color:var(--mut);font-size:13px">${esc(w.name)}</span></span><span class="bt">${esc(note)}</span></li>`}).join('');
+return `<li><span><b>${esc(o.title)}</b><br/><span style="color:var(--mut);font-size:13px">${dispName(RESULTS[o.slug]||[],{name:w.name,mask:w.mask||''})}</span></span><span class="bt">${esc(note)}</span></li>`}).join('');
 }
 const selO=document.getElementById('resOffice');
 const cur=selO.value;
@@ -498,7 +501,7 @@ const offices=OFFICES.filter(o=>!f||o.slug===f);
 document.getElementById('resGrid').innerHTML=offices.map(o=>{
 let arr=(RESULTS[o.slug]||[]).filter(r=>!q||r.name.toLowerCase().includes(q));
 const top=arr.slice(0,3),rest=arr.slice(3);
-const row=r=>`<div class="resrow"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><span>${r.votes} supporter${r.votes===1?'':'s'}</span></div><div class="bar"><i style="width:${r.pct}%"></i></div></div>`;
+const row=r=>`<div class="resrow"><div style="display:flex;justify-content:space-between;gap:8px"><b>${dispName(arr,r)}</b><span>${r.votes} supporter${r.votes===1?'':'s'}</span></div><div class="bar"><i style="width:${r.pct}%"></i></div></div>`;
 return `<div class="card"><h2>${esc(o.title)}</h2><small>${anyVotes?arr.length+' name(s)':"Endorsements will appear here"}</small>${anyVotes?(top.map(row).join('')||'<p style="color:var(--mut)">No names yet.</p>')+(rest.length?`<details style="border:0;padding:8px 0 0"><summary>See ${rest.length} more</summary>${rest.map(row).join('')}</details>`:''):'<p style="color:var(--mut)">Endorsements have not opened yet.</p>'}</div>`}).join('')||'<div class="card">No match.</div>';
 }
 // PLAN (details)

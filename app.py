@@ -200,8 +200,7 @@ def init_db():
         race TEXT NOT NULL,
         name TEXT NOT NULL,
         phone TEXT NOT NULL DEFAULT '',
-        created_at TEXT NOT NULL,
-        UNIQUE(race, name COLLATE NOCASE)
+        created_at TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS votes_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -226,12 +225,46 @@ def init_db():
         value TEXT NOT NULL
     );
     """)
-    # Phone numbers for volunteers (admin eyes only, never in public state).
+    # Identity is the phone number now: two people may share a name in one
+    # batch, so names are NOT unique — (race, phone) is.
     try:
         cols0 = [r["name"] for r in conn.execute("PRAGMA table_info(candidates)")]
         if "phone" not in cols0:
             conn.execute("ALTER TABLE candidates ADD COLUMN phone TEXT NOT NULL DEFAULT ''")
             conn.commit()
+    except Exception:
+        pass
+    try:
+        need_rebuild = False
+        for ix in conn.execute("PRAGMA index_list(candidates)").fetchall():
+            if ix["unique"] and ix["origin"] in ("u", "c"):
+                cols_ix = [r["name"] for r in
+                           conn.execute(f'PRAGMA index_info("{ix["name"]}")').fetchall()]
+                if "race" in cols_ix and "name" in cols_ix and "phone" not in cols_ix:
+                    need_rebuild = True
+        if need_rebuild:
+            conn.executescript("""
+            CREATE TABLE candidates_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                race TEXT NOT NULL,
+                name TEXT NOT NULL,
+                phone TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL
+            );
+            INSERT INTO candidates_new (id, race, name, phone, created_at)
+                SELECT id, race, name, COALESCE(phone, ''), created_at FROM candidates;
+            DROP TABLE candidates;
+            ALTER TABLE candidates_new RENAME TO candidates;
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_cand_race_phone
+                ON candidates(race, phone) WHERE phone != '';
+            """)
+            conn.commit()
+    except Exception:
+        pass
+    try:
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_cand_race_phone "
+                     "ON candidates(race, phone) WHERE phone != ''")
+        conn.commit()
     except Exception:
         pass
     # One verified identity, one endorsement: key ballots by Firebase uid.
@@ -325,9 +358,10 @@ def all_races(conn):
 def norm(s):
     return (s or "").strip()
 
-# Self-nomination rules: batches 2008–2021; every batch gets 2 places per role;
-# one person stands for only one role. Batch of 2021 is excused to focus on studies.
-BATCH_MIN, BATCH_MAX = 1996, 2021
+# Self-nomination rules: batches 2008–2021; every batch gets 2 places per role.
+# Identity is the phone number (names may repeat), so one number = one role.
+# Batch of 2021 is excused to focus on studies.
+BATCH_MIN, BATCH_MAX = 2008, 2021
 BATCH_STUDY_CUTOFF = 2020  # volunteers must be this batch or earlier
 BATCH_SLOT_LIMIT = 2
 BATCH_YEAR_RE = re.compile(r"\b(200[89]|201\d|202[01])\b")
@@ -348,25 +382,34 @@ def clean_phone(raw):
         d = d[2:]
     return d if len(d) == 10 else None
 
-def nomination_error(conn, race, name):
-    """Plain-language error, or None if this name may stand for this role."""
+def mask_phone(phone):
+    d = re.sub(r"\D", "", phone or "")
+    return d[-3:] if len(d) >= 3 else ""
+
+def nomination_error(conn, race, name, phone=""):
+    """Plain-language error, or None if this person may stand for this role."""
     batch = parse_batch(name)
     if not batch:
         if ANY_YEAR_RE.search(name or ""):
             return ("Sorry, this process covers batches 2008 to 2021. "
                     "Please check the batch year.")
-        return "Please add the batch year with the name, e.g. Anita Rao (2004)."
+        return "Please add the batch year with the name, e.g. Anita Rao (2012)."
     if int(batch) > BATCH_STUDY_CUTOFF:
         return (f"Batch {batch} — thank you, but please focus on your studies for now. "
                 "You can still endorse others.")
     if len(person_key(name)) < 2:
         return "Please type the full name."
     cmap = custom_map(conn)
+    phone = re.sub(r"\D", "", phone or "")
     same_batch = 0
-    for r in conn.execute("SELECT race, name FROM candidates").fetchall():
-        if person_key(r["name"]) == person_key(name) and r["race"] != race:
-            return (f"{norm(name)} is already standing for "
-                    f"{pretty(r['race'], cmap)['title']} — one person, one job.")
+    for r in conn.execute("SELECT race, name, phone FROM candidates").fetchall():
+        rphone = re.sub(r"\D", "", r["phone"] or "")
+        if phone and rphone and phone[-10:] == rphone[-10:] and r["race"] != race:
+            return (f"This mobile number is already standing for "
+                    f"{pretty(r['race'], cmap)['title']} — one person, one role.")
+        if not phone and person_key(r["name"]) == person_key(name) and r["race"] != race:
+            return (f"{norm(name)} seems to be standing for "
+                    f"{pretty(r['race'], cmap)['title']} already — one person, one role.")
         if r["race"] == race and parse_batch(r["name"]) == batch:
             same_batch += 1
     if same_batch >= BATCH_SLOT_LIMIT:
@@ -456,8 +499,8 @@ def create_office():
                 conn.rollback(); conn.close()
                 return jsonify({"error": "That name must be 2-60 characters"}), 400
             try:
-                cur = conn.execute("INSERT INTO candidates (race, name, created_at) VALUES (?,?,?)",
-                                   (slug, first_nominee, datetime.utcnow().isoformat()))
+                cur = conn.execute("INSERT INTO candidates (race, name, phone, created_at) VALUES (?,?,?,?)",
+                                   (slug, first_nominee, "", datetime.utcnow().isoformat()))
                 cid = cur.lastrowid
             except sqlite3.IntegrityError:
                 pass
@@ -501,8 +544,8 @@ def state():
     races = [o["slug"] for o in offices]
     cands = {}
     for race in races:
-        cands[race] = [{"id": r["id"], "name": r["name"]}
-                       for r in conn.execute("SELECT id, name FROM candidates WHERE race=? ORDER BY name COLLATE NOCASE", (race,))]
+        cands[race] = [{"id": r["id"], "name": r["name"], "mask": mask_phone(r["phone"])}
+                       for r in conn.execute("SELECT id, name, phone FROM candidates WHERE race=? ORDER BY name COLLATE NOCASE", (race,))]
     try:
         total = conn.execute(f"SELECT COUNT(*) c FROM {vt}").fetchone()["c"]
     except Exception:
@@ -511,7 +554,7 @@ def state():
     committee = {}
     for race in races:
         rows = conn.execute("""
-            SELECT c.id, c.name, c.created_at, COUNT(vc.vote_id) as votes
+            SELECT c.id, c.name, c.created_at, c.phone, COUNT(vc.vote_id) as votes
             FROM candidates c LEFT JOIN vote_choices vc
               ON vc.candidate_id = c.id AND vc.race = ?
             WHERE c.race = ?
@@ -521,7 +564,7 @@ def state():
         for r in rows:
             pct = round((r["votes"] / total * 100) if total else 0, 1)
             rlist.append({"id": r["id"], "name": r["name"], "votes": r["votes"], "pct": pct,
-                          "since": r["created_at"]})
+                          "since": r["created_at"], "mask": mask_phone(r["phone"])})
         results[race] = rlist
         # One holder per role. Tie rules, applied in the open:
         # 1. most supporters wins; 2. tie -> stepped forward first;
@@ -537,7 +580,7 @@ def state():
                 same_time = [x for x in tied if x["since"] == top["since"]]
                 how = "chairman decides" if same_time else "tie — stepped forward first"
             committee[race] = {"id": top["id"], "name": top["name"], "votes": top["votes"],
-                               "tie": bool(tied), "how": how,
+                               "tie": bool(tied), "how": how, "mask": top.get("mask", ""),
                                "tied_with": [x["name"] for x in tied] if tied else []}
     try:
         recent = [dict(r) for r in conn.execute(f"SELECT voter, created_at FROM {vt} ORDER BY id DESC LIMIT 8")]
@@ -596,10 +639,6 @@ def add_candidate():
             return jsonify({"error": "Voting has started, so new jobs cannot be added."}), 409
     except Exception:
         pass
-    err = nomination_error(conn, race, name)
-    if err:
-        conn.close()
-        return jsonify({"error": err}), 409
     phone = ""
     if data.get("phone"):
         phone = clean_phone(data.get("phone")) or ""
@@ -615,6 +654,10 @@ def add_candidate():
                 return jsonify({"error": "Please use your verified mobile number."}), 403
         else:
             phone = verified
+    err = nomination_error(conn, race, name, phone)
+    if err:
+        conn.close()
+        return jsonify({"error": err}), 409
     try:
         cur = conn.execute("INSERT INTO candidates (race, name, phone, created_at) VALUES (?,?,?,?)",
                            (race, name, phone, datetime.utcnow().isoformat()))
@@ -622,6 +665,9 @@ def add_candidate():
         cid = cur.lastrowid
     except sqlite3.IntegrityError:
         conn.close()
+        if phone:
+            return jsonify({"error": "This mobile number is already standing for "
+                                     f"{pretty(race)['title']}."}), 409
         return jsonify({"error": f"'{name}' is already added for {pretty(race)['title']}"}), 409
     conn.close()
     return jsonify({"ok": True, "id": cid, "race": race, "name": name})
